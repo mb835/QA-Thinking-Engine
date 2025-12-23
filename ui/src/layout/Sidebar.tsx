@@ -1,46 +1,39 @@
-import {
-  LayoutDashboard,
-  ListChecks,
-  Play,
-  GitBranch,
-  Cloud,
-  Image,
-  FileText,
-  Settings
-} from "lucide-react";
+import { NavLink } from "react-router-dom";
 
-const items = [
-  { label: "Dashboard", icon: LayoutDashboard, active: true },
-  { label: "Test Scenarios", icon: ListChecks },
-  { label: "Test Runs", icon: Play },
-  { label: "CI/CD", icon: GitBranch },
-  { label: "Cloud Testing", icon: Cloud },
-  { label: "Visual Tests", icon: Image },
-  { label: "Reports", icon: FileText },
-  { label: "Settings", icon: Settings },
+const menu = [
+  { label: "Dashboard", path: "/dashboard" },
+  { label: "Test Scenarios", path: "/scenarios" },
+  { label: "Test Runs", path: "/runs" },
+  { label: "CI / CD", path: "/ci" },
+  { label: "Cloud Testing", path: "/cloud" },
+  { label: "Visual Tests", path: "/visual" },
+  { label: "Reports", path: "/reports" },
+  { label: "Settings", path: "/settings" },
 ];
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 bg-panel border-r border-panel-border p-6">
-      <div className="mb-8 text-xl font-bold text-slate-100">
+    <aside className="w-64 min-h-screen bg-[#0b1220] border-r border-white/10 text-white">
+      <div className="px-6 py-5 text-xl font-semibold tracking-wide">
         QA AI Agent
       </div>
 
-      <nav className="space-y-1">
-        {items.map((item) => (
-          <div
-            key={item.label}
-            className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition
+      <nav className="px-3 space-y-1">
+        {menu.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) =>
+              `block rounded-md px-4 py-2 text-sm transition
               ${
-                item.active
-                  ? "bg-primary-soft text-primary"
-                  : "text-slate-400 hover:bg-background-hover hover:text-white"
-              }`}
+                isActive
+                  ? "bg-indigo-600 text-white"
+                  : "text-white/70 hover:bg-white/5 hover:text-white"
+              }`
+            }
           >
-            <item.icon size={18} />
-            <span>{item.label}</span>
-          </div>
+            {item.label}
+          </NavLink>
         ))}
       </nav>
     </aside>
