@@ -25,7 +25,7 @@ app.get("/health", (_, res) => {
 });
 
 /* =========================
-   AI – GENERATE SCENARIO + TEST CASE + EXPERT REASONING
+   AI – GENERATE TEST SCENARIO
    ========================= */
 app.post("/api/scenarios", async (req, res) => {
   const { intent } = req.body;
@@ -40,14 +40,21 @@ app.post("/api/scenarios", async (req, res) => {
     const prompt = `
 Jsi senior QA automation expert (enterprise level, rok 2027).
 
-Na základě TESTOVACÍHO ZÁMĚRU vytvoř PROFESIONÁLNÍ TEST CASE.
+DŮLEŽITÉ TECHNICKÉ OMEZENÍ:
+- Projekt používá VÝHRADNĚ Playwright
+- Selenium, Cypress ani jiné frameworky NESMÍŠ použít
+- Veškerá doporučení musí být:
+  - Playwright-first
+  - TypeScript-oriented
+  - vhodná pro E2E testy moderních webových aplikací
 
 PRAVIDLA:
 - Odpovídej POUZE validním JSONem
 - Žádný text mimo JSON
 - Piš česky
 - Buď strukturovaný, konzistentní, realistický
-- Test case musí být použitelný v praxi (ne akademický)
+- Test case musí být reálně použitelný v praxi
+- Nepoužívej Selenium, Cypress ani jiné nástroje – pouze Playwright
 
 VRAŤ PŘESNĚ TUTO STRUKTURU:
 
@@ -83,7 +90,8 @@ TESTOVACÍ ZÁMĚR:
       messages: [
         {
           role: "system",
-          content: "Jsi přísný senior QA automation architekt.",
+          content:
+            "Jsi přísný senior QA automation architekt. Dodržuj striktně Playwright-only přístup.",
         },
         {
           role: "user",
