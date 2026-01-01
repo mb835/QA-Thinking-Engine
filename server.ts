@@ -16,7 +16,7 @@ const openai = new OpenAI({
 /* =========================
    HEALTH CHECK
    ========================= */
-app.get("/health", (_, res) => {
+app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
@@ -34,56 +34,43 @@ app.post("/api/scenarios", async (req, res) => {
 
   try {
     const prompt = `
-Jsi senior QA automation architekt (enterprise úroveň, rok 2027).
-Používáš VÝHRADNĚ Playwright.
+Jsi senior QA automation architekt (enterprise úroveň).
+Používáš výhradně Playwright.
 
-UŽIVATEL zadává pouze TESTOVACÍ ZÁMĚR.
+Uživatel zadává pouze TESTOVACÍ ZÁMĚR.
 Tvým cílem je vytvořit PROFESIONÁLNÍ QA ANALÝZU VHODNOU DO PORTFOLIA.
 
 VYTVOŘ:
-1️⃣ PŘESNĚ JEDEN HLAVNÍ ACCEPTANCE TEST CASE
-   - business-kritický happy path
-   - reprezentuje, zda systém generuje hodnotu
-   - musí být kompletní a samostatný
+1️⃣ PŘESNĚ JEDEN HLAVNÍ AKCEPTAČNÍ TEST (Happy Path)
+2️⃣ 5 DALŠÍCH TEST CASE:
+   - NEGATIVE
+   - EDGE
+   - SECURITY
+   - UX
+   - DATA
 
-2️⃣ 5–6 DALŠÍCH TEST CASE
-   - typy: NEGATIVE, EDGE, SECURITY, UX, DATA
-   - nejsou acceptance
-   - rozšiřují pokrytí rizik
-
-EXPERT QA INSIGHT MUSÍ OBSAHOVAT:
-- hluboké vysvětlení, PROČ je tento acceptance test klíčový
-- jasný business kontext
-- konkrétní rizika
-- praktická Playwright doporučení (E2E pohled)
-
-VRAŤ POUZE VALIDNÍ JSON VE STRUKTUŘE:
+VRAŤ POUZE VALIDNÍ JSON V TOMTO FORMÁTU:
 
 {
   "testCase": {
     "id": "TC-ACC-001",
-    "title": "Krátký výstižný název acceptance testu",
-    "description": "Popis hlavního business scénáře",
-    "preconditions": string[],
-    "steps": string[],
+    "title": "Název akceptačního testu",
+    "description": "Popis business scénáře",
+    "preconditions": ["string"],
+    "steps": ["string"],
     "expectedResult": "string",
-    "priority": "High",
-    "notes": "",
-    "expert": {
-      "reasoning": "Detailní QA vysvětlení business významu testu",
-      "coverage": {
-        "covers": string[],
-        "doesNotCover": string[]
-      },
-      "risks": string[],
-      "automationTips": string[]
+    "qaInsight": {
+      "reasoning": "Proč je tento test klíčový",
+      "coverage": ["string"],
+      "risks": ["string"],
+      "automationTips": ["string"]
     },
     "additionalTestCases": [
       {
-        "id": "neg-1",
+        "id": "NEG-1",
         "type": "NEGATIVE",
         "title": "Název testu",
-        "description": "Krátký popis rizika nebo odchylky"
+        "description": "Popis rizika"
       }
     ]
   }
@@ -91,6 +78,8 @@ VRAŤ POUZE VALIDNÍ JSON VE STRUKTUŘE:
 
 TESTOVACÍ ZÁMĚR:
 "${intent}"
+
+Odpověď MUSÍ být výhradně JSON.
 `;
 
     const completion = await openai.chat.completions.create({
@@ -101,7 +90,78 @@ TESTOVACÍ ZÁMĚR:
         {
           role: "system",
           content:
-            "Jsi přísný senior QA architekt. Vrať POUZE JSON. Žádný jiný text.",
+            "Musíš odpovědět výhradně jako validní JSON objekt. Nepřidávej žádný text mimo JSON.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+
+    const content = completion.choices[0].message.content;
+
+    if (!content) {
+      throw new Error("AI nevrátila žádný obsah.");
+    }
+
+    const parsed = JSON.parse(content);
+
+    // 🧠 HARD VALIDACE KONTRAKTU
+    if (!parsed.testCase || !parsed.testCase.qaInsight) {
+      throw new Error("Neplatná struktura odpovědi AI.");
+    }
+
+    res.json(parsed);
+  } catch (error: any) {
+    console.error("AI ERROR:", error);
+    res.status(500).json({
+      error: "Chyba při generování QA analýzy",
+      details: error.message,
+    });
+  }
+});
+
+/* =========================
+   AI – GENERATE STEPS FOR ADDITIONAL TEST CASE
+   ========================= */
+app.post("/api/scenarios/additional/steps", async (req, res) => {
+  const { additionalTestCase } = req.body;
+
+  if (!additionalTestCase?.type || !additionalTestCase?.title) {
+    return res.status(400).json({ error: "Neplatný test case." });
+  }
+
+  try {
+    const prompt = `
+Jsi senior QA automation expert.
+Používáš výhradně Playwright.
+
+Vygeneruj detailní testovací kroky pro tento test:
+
+TYP: ${additionalTestCase.type}
+NÁZEV: ${additionalTestCase.title}
+POPIS: ${additionalTestCase.description}
+
+VRAŤ POUZE JSON:
+
+{
+  "steps": ["string"],
+  "expectedResult": "string"
+}
+
+Odpověď musí být validní JSON.
+`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "Odpověz výhradně jako JSON objekt. Žádný jiný text.",
         },
         {
           role: "user",
@@ -119,53 +179,7 @@ TESTOVACÍ ZÁMĚR:
     res.json(JSON.parse(content));
   } catch (error: any) {
     console.error("AI ERROR:", error);
-
-    res.status(500).json({
-      error: "Chyba při generování QA analýzy",
-      details: error.message,
-    });
-  }
-});
-
-/* =========================
-   AI – GENERATE STEPS FOR ADDITIONAL TEST CASE
-   ========================= */
-app.post("/api/scenarios/additional/steps", async (req, res) => {
-  const { additionalTestCase } = req.body;
-
-  try {
-    const prompt = `
-Jsi senior QA automation expert.
-Používáš pouze Playwright.
-
-VYGENERUJ DETAILNÍ TESTOVACÍ KROKY PRO:
-Typ: ${additionalTestCase.type}
-Název: ${additionalTestCase.title}
-Popis: ${additionalTestCase.description}
-
-VRAŤ POUZE JSON:
-{
-  "steps": string[],
-  "expectedResult": "string"
-}
-`;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    const content = completion.choices[0].message.content;
-
-    if (!content) {
-      throw new Error("AI nevrátila žádný obsah.");
-    }
-
-    res.json(JSON.parse(content));
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -173,5 +187,5 @@ VRAŤ POUZE JSON:
    SERVER START
    ========================= */
 app.listen(3000, () => {
-  console.log("Backend running on http://localhost:3000");
+  console.log("✅ Backend běží na http://localhost:3000");
 });

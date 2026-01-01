@@ -1,25 +1,27 @@
-// agent/routes/runPlaywright.ts
+import { Router } from "express";
+import { generatePlaywrightSkeleton } from "../agent/playwright/generateSkeleton";
+import { writePlaywrightTest } from "../agent/playwright/playwrightGenerator";
+import { TestCase } from "../agent/scenarios/types";
 
-import { Request, Response } from "express";
-import { generatePlaywrightTest } from "../playwright/playwrightGenerator";
-import { TestCase } from "../scenarios/types";
+const router = Router();
 
-export async function runPlaywright(req: Request, res: Response) {
+router.post("/", async (req, res) => {
   try {
-    const testCase = req.body.testCase as TestCase;
+    const testCase: TestCase = req.body;
 
-    if (!testCase) {
-      return res.status(400).json({ error: "Missing testCase" });
-    }
-
-    const result = generatePlaywrightTest(testCase);
+    const code = generatePlaywrightSkeleton(testCase);
+    const fileName = await writePlaywrightTest(testCase, code);
 
     res.json({
       success: true,
-      file: result.fileName,
+      fileName,
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Playwright generation failed" });
+  } catch (err: any) {
+    res.status(400).json({
+      success: false,
+      error: err.message,
+    });
   }
-}
+});
+
+export default router;
