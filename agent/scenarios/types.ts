@@ -1,13 +1,32 @@
-export type ScenarioType = 'acceptance' | 'negative' | 'security';
-
-export type ScenarioStep = {
-  description: string;
+export type QAInsight = {
+  reasoning: string;
+  coverage: string[];
+  risks: string[];
+  automationTips: string[];
 };
 
-export type Scenario = {
+export type TestCaseType =
+  | "ACCEPTANCE"
+  | "NEGATIVE"
+  | "EDGE"
+  | "SECURITY"
+  | "UX"
+  | "DATA";
+
+export type TestCase = {
   id: string;
-  name: string;
-  domain: 'ecommerce';
-  type: ScenarioType;
-  steps: ScenarioStep[];
+  type: TestCaseType;
+  title: string;
+  description: string;
+
+  preconditions?: string[];
+  steps?: string[];
+  expectedResult?: string;
+
+  qaInsight?: QAInsight;
+};
+
+export type ScenarioResponse = {
+  testCase: TestCase;
+  additionalTestCases: TestCase[];
 };

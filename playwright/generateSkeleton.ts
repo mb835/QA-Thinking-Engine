@@ -1,10 +1,20 @@
-// agent/playwright/generateSkeleton.ts
-
-import { TestCase } from "../scenarios/types";
+import { TestCase } from "../agent/scenarios/types";
 
 export function generatePlaywrightSkeleton(testCase: TestCase): string {
+  if (!testCase.steps || testCase.steps.length === 0) {
+    throw new Error(
+      `Cannot generate Playwright skeleton: TestCase "${testCase.title}" has no steps.`
+    );
+  }
+
+  if (!testCase.qaInsight) {
+    throw new Error(
+      `Cannot generate Playwright skeleton: TestCase "${testCase.title}" has no QA Insight.`
+    );
+  }
+
   const stepsComment = testCase.steps
-    .map((step: string, i: number) => `// ${i + 1}. ${step}`)
+    .map((step, i) => `// ${i + 1}. ${step}`)
     .join("\n");
 
   const qaInsightBlock = `
@@ -17,30 +27,24 @@ export function generatePlaywrightSkeleton(testCase: TestCase): string {
  * ${testCase.qaInsight.reasoning}
  *
  * Coverage:
- * ${testCase.qaInsight.coverage.map((c: string) => `- ${c}`).join("\n * ")}
+${testCase.qaInsight.coverage.map((c) => ` * - ${c}`).join("\n")}
  *
  * Risks:
- * ${testCase.qaInsight.risks.map((r: string) => `- ${r}`).join("\n * ")}
+${testCase.qaInsight.risks.map((r) => ` * - ${r}`).join("\n")}
  *
  * Automation tips:
- * ${(testCase.qaInsight.automationTips ?? [])
-   .map((t: string) => `- ${t}`)
-   .join("\n * ")}
+${testCase.qaInsight.automationTips.map((t) => ` * - ${t}`).join("\n")}
  */
 `;
 
   return `
 import { test, expect } from "@playwright/test";
 
-${qaInsightBlock}
-
 test("${testCase.title}", async ({ page }) => {
 ${stepsComment}
 
-  // TODO: Implement Playwright steps
-  await page.goto("https://www.alza.cz");
-
-  // expect(...)
+  // TODO: Implement Playwright steps here
 });
+${qaInsightBlock}
 `;
 }

@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
 
-    /* === STRICTNOST (pro tvůj kód) === */
+    /* === STRICT === */
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
@@ -20,12 +20,15 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
 
-    /* === PERFORMANCE / REALITA KNIHOVEN === */
-    "skipLibCheck": true,
-
-    /* === UX === */
-    "useDefineForClassFields": true
+    /* === PERFORMANCE === */
+    "skipLibCheck": true
   },
 
-  "include": ["src"]
+  "include": [
+    "agent/**/*.ts",
+    "server.ts",
+    "ui/**/*.ts",
+    "ui/**/*.tsx",
+    "playwright/**/*.ts"
+  ]
 }
