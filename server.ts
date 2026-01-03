@@ -39,19 +39,11 @@ VRAŤ POUZE VALIDNÍ JSON.
 Jsi senior QA automation architekt (enterprise úroveň).
 Používáš výhradně Playwright.
 
-Uživatel zadává pouze TESTOVACÍ ZÁMĚR.
-Tvým cílem je vytvořit PROFESIONÁLNÍ QA ANALÝZU VHODNOU DO PORTFOLIA.
+Vytvoř:
+- 1 hlavní ACCEPTANCE test
+- 5 dalších testů: NEGATIVE, EDGE, SECURITY, UX, DATA
 
-VYTVOŘ:
-1️⃣ PŘESNĚ JEDEN HLAVNÍ AKCEPTAČNÍ TEST (Happy Path)
-2️⃣ 5 DALŠÍCH TEST CASE:
-   - NEGATIVE
-   - EDGE
-   - SECURITY
-   - UX
-   - DATA
-
-KAŽDÝ TEST CASE MUSÍ OBSAHOVAT:
+KAŽDÝ TEST MUSÍ OBSAHOVAT:
 - id
 - type
 - title
@@ -63,14 +55,15 @@ KAŽDÝ TEST CASE MUSÍ OBSAHOVAT:
   - risks (array)
   - automationTips (array)
 
-AKCEPTAČNÍ TEST NAVÍC OBSAHUJE:
+Pouze ACCEPTANCE test má navíc:
 - preconditions
 - steps
 
 DALŠÍ TESTY:
-- kroky se NEGENERUJÍ hned
+- kroky se generují až později
 
 STRUKTURA:
+
 {
   "testCase": {
     "id": "TC-ACC-001",
@@ -115,8 +108,7 @@ TESTOVACÍ ZÁMĚR:
       messages: [
         {
           role: "system",
-          content:
-            "Musíš odpovědět výhradně jako validní JSON objekt. Slovo JSON musí být přítomné.",
+          content: "Odpověz výhradně jako validní JSON objekt.",
         },
         {
           role: "user",
@@ -132,7 +124,6 @@ TESTOVACÍ ZÁMĚR:
 
     const parsed = JSON.parse(content);
 
-    // 🧠 HARD VALIDACE KONTRAKTU
     if (
       !parsed.testCase ||
       !parsed.testCase.qaInsight ||
@@ -142,11 +133,11 @@ TESTOVACÍ ZÁMĚR:
     }
 
     res.json(parsed);
-  } catch (error: any) {
+  } catch (error) {
     console.error("AI ERROR:", error);
     res.status(500).json({
       error: "Chyba při generování QA analýzy",
-      details: error.message,
+      details: String(error),
     });
   }
 });
@@ -157,7 +148,7 @@ TESTOVACÍ ZÁMĚR:
 app.post("/api/scenarios/additional/steps", async (req, res) => {
   const { additionalTestCase } = req.body;
 
-  if (!additionalTestCase?.type || !additionalTestCase?.title) {
+  if (!additionalTestCase?.id || !additionalTestCase?.type) {
     return res.status(400).json({ error: "Neplatný test case." });
   }
 
@@ -166,9 +157,9 @@ app.post("/api/scenarios/additional/steps", async (req, res) => {
 VRAŤ POUZE VALIDNÍ JSON.
 
 Jsi senior QA automation expert.
-Používáš výhradně Playwright.
+Používáš Playwright.
 
-Vygeneruj DETAILNÍ testovací kroky pro tento test:
+Vygeneruj kroky pro test:
 
 TYP: ${additionalTestCase.type}
 NÁZEV: ${additionalTestCase.title}
@@ -188,8 +179,7 @@ STRUKTURA:
       messages: [
         {
           role: "system",
-          content:
-            "Odpověz výhradně jako JSON objekt. Slovo JSON musí být přítomné.",
+          content: "Odpověz pouze jako JSON.",
         },
         {
           role: "user",
@@ -204,9 +194,12 @@ STRUKTURA:
     }
 
     res.json(JSON.parse(content));
-  } catch (error: any) {
+  } catch (error) {
     console.error("AI ERROR:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: "Chyba při generování kroků",
+      details: String(error),
+    });
   }
 });
 

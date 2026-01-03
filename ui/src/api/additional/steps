@@ -1,0 +1,60 @@
+app.post("/api/scenarios/additional/steps", async (req, res) => {
+  const { additionalTestCase } = req.body;
+
+  if (!additionalTestCase?.type || !additionalTestCase?.title) {
+    return res.status(400).json({ error: "Neplatný test case." });
+  }
+
+  try {
+    const prompt = `
+VRAŤ POUZE VALIDNÍ JSON.
+
+Jsi senior QA automation architekt.
+Používáš výhradně Playwright.
+
+Vytvoř DETAILNÍ TEST CASE PRO:
+TYP: ${additionalTestCase.type}
+NÁZEV: ${additionalTestCase.title}
+POPIS: ${additionalTestCase.description}
+
+VRAŤ JSON VE STRUKTUŘE:
+{
+  "steps": ["string"],
+  "expectedResult": "string",
+  "qaInsight": {
+    "reasoning": "Proč je tento test důležitý",
+    "coverage": ["string"],
+    "risks": ["string"],
+    "automationTips": ["string"]
+  }
+}
+`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "Musíš odpovědět výhradně jako JSON objekt. Slovo JSON musí být přítomné.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+
+    const content = completion.choices[0].message.content;
+    if (!content) {
+      throw new Error("AI nevrátila žádný obsah.");
+    }
+
+    res.json(JSON.parse(content));
+  } catch (error: any) {
+    console.error("AI ERROR:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
