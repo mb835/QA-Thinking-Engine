@@ -1,22 +1,35 @@
-import { FaRobot } from "react-icons/fa";
+import { FaRobot, FaRedo, FaExclamationTriangle } from "react-icons/fa";
 
-export default function AiGeneratedBadge() {
+type AiStatus = "ok" | "retried" | "partial" | null;
+
+type Props = {
+  status?: AiStatus;
+};
+
+export default function AiGeneratedBadge({ status }: Props) {
+  // default = ok
+  if (status === "retried") {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-400">
+        <FaRedo />
+        AI generated (retried)
+      </span>
+    );
+  }
+
+  if (status === "partial") {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-orange-500/20 text-orange-400">
+        <FaExclamationTriangle />
+        AI generated (partial)
+      </span>
+    );
+  }
+
   return (
-    <div
-      title="Tento scénář byl vygenerován pomocí AI"
-      className="
-        inline-flex items-center gap-1
-        px-2 py-1
-        text-xs font-semibold
-        rounded-full
-        bg-gradient-to-r from-indigo-500 to-blue-500
-        text-white
-        shadow-md
-        select-none
-      "
-    >
-      <FaRobot size={12} />
+    <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-emerald-600/20 text-emerald-400">
+      <FaRobot />
       AI generated
-    </div>
+    </span>
   );
 }

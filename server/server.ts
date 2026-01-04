@@ -2,23 +2,12 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
+import { exportTestCaseToJira } from "./jiraIntegration.js";
 
 dotenv.config();
 
 const app = express();
-
-/* =========================
-   CORS
-========================= */
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-
-app.options("*", cors());
+app.use(cors());
 app.use(express.json());
 
 const openai = new OpenAI({
@@ -33,23 +22,16 @@ app.get("/health", (_req, res) => {
 });
 
 /* =========================
-   AI – GENERATE QA ANALYSIS
+   AI PROMPT
 ========================= */
-app.post("/api/scenarios", async (req, res) => {
-  const { intent } = req.body;
-
-  if (!intent || typeof intent !== "string") {
-    return res.status(400).json({
-      error: "Chybí nebo je neplatný testovací záměr.",
-    });
-  }
-
-  try {
-    const prompt = `
+function buildScenarioPrompt(intent: string, isRetry = false) {
+  return `
 VRAŤ POUZE VALIDNÍ JSON.
 
 Jsi senior QA automation architekt (enterprise úroveň).
 Používáš výhradně Playwright.
+
+${isRetry ? "POZOR: PŘEDCHOZÍ ODPOVĚĎ BYLA NEÚPLNÁ. MUSÍŠ VRÁTIT KROKY ACCEPTANCE TESTU." : ""}
 
 Vytvoř:
 - 1 hlavní ACCEPTANCE test
@@ -67,19 +49,20 @@ KAŽDÝ TEST MUSÍ OBSAHOVAT:
   - risks (array)
   - automationTips (array)
 
-Pouze ACCEPTANCE test má navíc:
-- preconditions
-- steps
+POVINNÉ:
+- ACCEPTANCE test MUSÍ mít:
+  - preconditions (array)
+  - steps (array, min. 5 kroků)
 
 DALŠÍ TESTY:
 - kroky se generují až později
 
-STRUKTURA IDEÁLNĚ:
+STRUKTURA:
 
 {
   "testCase": {
-    "id": "",
-    "type": "",
+    "id": "TC-ACC-001",
+    "type": "ACCEPTANCE",
     "title": "",
     "description": "",
     "preconditions": [],
@@ -98,10 +81,21 @@ STRUKTURA IDEÁLNĚ:
 TESTOVACÍ ZÁMĚR:
 "${intent}"
 `;
+}
+
+/* =========================
+   AI CALL WITH RETRY
+========================= */
+async function generateScenarioWithRetry(intent: string) {
+  let attempt = 0;
+  let lastResult: any = null;
+
+  while (attempt < 2) {
+    const isRetry = attempt === 1;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      temperature: 0.25,
+      temperature: isRetry ? 0.1 : 0.25,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -110,43 +104,58 @@ TESTOVACÍ ZÁMĚR:
         },
         {
           role: "user",
-          content: prompt,
+          content: buildScenarioPrompt(intent, isRetry),
         },
       ],
     });
 
     const content = completion.choices[0].message.content;
     if (!content) {
-      throw new Error("AI nevrátila žádný obsah.");
+      attempt++;
+      continue;
     }
 
     const parsed = JSON.parse(content);
+    lastResult = parsed;
 
-    /* =========================
-       🔧 NORMALIZACE ODPOVĚDI AI
-    ========================= */
-    const testCase = parsed.testCase ?? parsed;
+    const steps = parsed?.testCase?.steps;
 
-    if (!testCase || typeof testCase !== "object") {
-      throw new Error("AI nevrátila testCase objekt.");
+    if (Array.isArray(steps) && steps.length >= 5) {
+      return {
+        ...parsed,
+        meta: {
+          aiStatus: attempt === 0 ? "ok" : "retried",
+        },
+      };
     }
 
-    // povinné fallbacky – AI není deterministická
-    testCase.qaInsight ??= {
-      reasoning: "",
-      coverage: [],
-      risks: [],
-      automationTips: [],
-    };
+    attempt++;
+  }
 
-    testCase.preconditions ??= [];
-    testCase.steps ??= [];
-    testCase.additionalTestCases ??= [];
+  // fallback – partial
+  return {
+    ...lastResult,
+    meta: {
+      aiStatus: "partial",
+    },
+  };
+}
 
-    // sjednocený výstup pro FE
-    res.json({
-      testCase,
+/* =========================
+   AI – GENERATE QA ANALYSIS
+========================= */
+app.post("/api/scenarios", async (req, res) => {
+  const { intent } = req.body;
+
+  if (!intent || typeof intent !== "string") {
+    return res.status(400).json({
+      error: "Chybí nebo je neplatný testovací záměr.",
     });
+  }
+
+  try {
+    const result = await generateScenarioWithRetry(intent);
+    res.json(result);
   } catch (error) {
     console.error("AI ERROR:", error);
     res.status(500).json({
@@ -163,9 +172,7 @@ app.post("/api/scenarios/additional/steps", async (req, res) => {
   const { additionalTestCase } = req.body;
 
   if (!additionalTestCase?.id || !additionalTestCase?.type) {
-    return res.status(400).json({
-      error: "Neplatný test case.",
-    });
+    return res.status(400).json({ error: "Neplatný test case." });
   }
 
   try {
@@ -193,28 +200,15 @@ STRUKTURA:
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [
-        {
-          role: "system",
-          content: "Odpověz pouze jako JSON.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
+        { role: "system", content: "Odpověz pouze jako JSON." },
+        { role: "user", content: prompt },
       ],
     });
 
     const content = completion.choices[0].message.content;
-    if (!content) {
-      throw new Error("AI nevrátila žádný obsah.");
-    }
+    if (!content) throw new Error("AI nevrátila žádný obsah.");
 
-    const parsed = JSON.parse(content);
-
-    res.json({
-      steps: parsed.steps ?? [],
-      expectedResult: parsed.expectedResult ?? "",
-    });
+    res.json(JSON.parse(content));
   } catch (error) {
     console.error("AI ERROR:", error);
     res.status(500).json({
@@ -227,40 +221,7 @@ STRUKTURA:
 /* =========================
    JIRA – EXPORT TEST CASE (MOCK)
 ========================= */
-app.post("/api/integrations/jira/export", (req, res) => {
-  try {
-    const { testCase } = req.body;
-
-    if (!testCase) {
-      return res.status(400).json({
-        error: "Chybí testCase payload.",
-      });
-    }
-
-    const jiraPayload = {
-      summary: testCase.title,
-      preconditions: testCase.preconditions ?? "N/A",
-      steps: (testCase.steps ?? []).map(
-        (s: { step: string; expected: string }, index: number) => ({
-          order: index + 1,
-          action: s.step,
-          expectedResult: s.expected,
-        })
-      ),
-    };
-
-    res.json({
-      mode: "MOCK",
-      message: "Test case převeden do JIRA formátu",
-      jiraPayload,
-    });
-  } catch (error) {
-    console.error("JIRA EXPORT ERROR:", error);
-    res.status(500).json({
-      error: "Chyba při exportu do JIRA",
-    });
-  }
-});
+app.post("/api/integrations/jira/export", exportTestCaseToJira);
 
 /* =========================
    SERVER START
