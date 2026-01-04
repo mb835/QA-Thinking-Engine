@@ -266,6 +266,65 @@ STRUKTURA:
   }
 });
 
+/* =========================================================
+   🆕 PLAYWRIGHT EXPORT – PORTFOLIO KILLER
+   (POUZE GENERUJE KÓD, NIC NEUKLÁDÁ)
+========================================================= */
+app.post("/api/tests/playwright", async (req, res) => {
+  const { testCase } = req.body;
+
+  if (
+    !testCase?.title ||
+    !Array.isArray(testCase.steps) ||
+    testCase.steps.length === 0
+  ) {
+    return res.status(400).json({
+      error: "Test case nemá kroky – nelze generovat Playwright test.",
+    });
+  }
+
+  try {
+    const prompt = `
+VRAŤ POUZE VALIDNÍ STRING.
+
+Jsi senior QA automation engineer.
+Používáš Playwright + TypeScript.
+
+Vygeneruj Playwright test podle tohoto test case:
+
+NÁZEV: ${testCase.title}
+KROKY:
+${testCase.steps.map((s: string, i: number) => `${i + 1}. ${s}`).join("\n")}
+
+OČEKÁVANÝ VÝSLEDEK:
+${testCase.expectedResult}
+
+VRAŤ POUZE OBSAH .spec.ts SOUBORU.
+`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.2,
+      messages: [
+        { role: "system", content: "Vrať pouze kód Playwright testu." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const code = completion.choices[0].message.content;
+
+    res.json({
+      specName: `${testCase.id}.spec.ts`,
+      content: code,
+    });
+  } catch (error) {
+    console.error("PLAYWRIGHT ERROR:", error);
+    res.status(500).json({
+      error: "Chyba při generování Playwright testu",
+    });
+  }
+});
+
 /* =========================
    JIRA – EXPORT TEST CASE (MOCK)
 ========================= */
