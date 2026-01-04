@@ -11,16 +11,26 @@ import {
   FaArrowLeft,
   FaListOl,
   FaMagic,
+  FaDownload,
+  FaJira,
+  FaExternalLinkAlt,
 } from "react-icons/fa";
 
 import {
   generateScenario,
   generateAdditionalSteps,
   generateExpertInsight,
+  downloadPlaywrightSpec,
+  exportToJira,
 } from "../api/scenariosApi";
 import { runPlaywright } from "../api/runPlaywrightApi";
 import AiGeneratedBadge from "../components/AiGeneratedBadge";
 import LoadingOverlay from "../components/LoadingOverlay";
+
+type JiraExportResult = {
+  issueKey: string;
+  issueUrl: string;
+};
 
 export default function TestScenariosPage() {
   const [intent, setIntent] = useState("");
@@ -31,20 +41,9 @@ export default function TestScenariosPage() {
   const [loadingStepsId, setLoadingStepsId] = useState<string | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(false);
   const [pwLoadingId, setPwLoadingId] = useState<string | null>(null);
+  const [jiraLoading, setJiraLoading] = useState(false);
 
-  /* =========================
-     DERIVED FLAGS (FIX)
-  ========================= */
-  const hasSteps =
-    Array.isArray(activeTestCase?.steps) &&
-    activeTestCase.steps.length > 0;
-
-  const hasInsight =
-    activeTestCase?.qaInsight &&
-    Array.isArray(activeTestCase.qaInsight.coverage) &&
-    activeTestCase.qaInsight.coverage.length > 0;
-
-  const isAcceptance = activeTestCase?.id === scenario?.id;
+  const [jiraResult, setJiraResult] = useState<JiraExportResult | null>(null);
 
   /* =========================
      GENERATE SCENARIO
@@ -57,16 +56,10 @@ export default function TestScenariosPage() {
       const data = await generateScenario(intent);
       setScenario(data.testCase);
       setActiveTestCase(data.testCase);
+      setJiraResult(null);
     } finally {
       setLoading(false);
     }
-  }
-
-  /* =========================
-     SELECT TEST CASE
-  ========================= */
-  function handleSelectTestCase(tc: any) {
-    setActiveTestCase(tc);
   }
 
   /* =========================
@@ -94,7 +87,7 @@ export default function TestScenariosPage() {
   }
 
   /* =========================
-     GENERATE EXPERT INSIGHT
+     GENERATE / COMPLETE EXPERT INSIGHT
   ========================= */
   async function handleGenerateInsight(tc: any) {
     try {
@@ -124,7 +117,7 @@ export default function TestScenariosPage() {
   }
 
   /* =========================
-     PLAYWRIGHT
+     PLAYWRIGHT – INTERNAL
   ========================= */
   async function handleRunPlaywright(tc: any) {
     try {
@@ -137,6 +130,44 @@ export default function TestScenariosPage() {
       setPwLoadingId(null);
     }
   }
+
+  /* =========================
+     PLAYWRIGHT – DOWNLOAD
+  ========================= */
+  function handleDownloadSpec(tc: any) {
+    downloadPlaywrightSpec(tc);
+  }
+
+  /* =========================
+     JIRA EXPORT
+  ========================= */
+  async function handleExportToJira(tc: any) {
+    try {
+      setJiraLoading(true);
+      setJiraResult(null);
+
+      const result = await exportToJira(tc);
+      setJiraResult(result);
+    } catch {
+      alert("❌ Chyba při exportu do JIRA");
+    } finally {
+      setJiraLoading(false);
+    }
+  }
+
+  /* =========================
+     DERIVED STATE (🔥 FIX)
+  ========================= */
+  const isAcceptance = activeTestCase?.id === scenario?.id;
+  const hasSteps = Array.isArray(activeTestCase?.steps);
+
+  // 🔥 KLÍČOVÝ FIX – insight musí být KOMPLETNÍ
+  const hasFullInsight =
+    activeTestCase?.qaInsight &&
+    activeTestCase.qaInsight.reasoning &&
+    activeTestCase.qaInsight.coverage?.length > 0 &&
+    activeTestCase.qaInsight.risks?.length > 0 &&
+    activeTestCase.qaInsight.automationTips?.length > 0;
 
   return (
     <div className="px-8 py-6 relative">
@@ -215,7 +246,7 @@ export default function TestScenariosPage() {
                   className="text-sm px-3 py-2 rounded bg-slate-800 hover:bg-slate-700"
                 >
                   <FaMagic className="inline mr-2" />
-                  Generate steps
+                  Generovat kroky
                 </button>
               )}
 
@@ -224,21 +255,61 @@ export default function TestScenariosPage() {
                 {activeTestCase.expectedResult}
               </p>
 
-              <button
-                disabled={!hasSteps}
-                onClick={() => handleRunPlaywright(activeTestCase)}
-                className={`mt-2 px-4 py-2 rounded-lg ${
-                  hasSteps
-                    ? "bg-emerald-600 hover:bg-emerald-700"
-                    : "bg-slate-700 cursor-not-allowed"
-                }`}
-              >
-                {pwLoadingId === activeTestCase.id
-                  ? "Generuji…"
-                  : "Generate Playwright"}
-              </button>
+              {/* ACTIONS */}
+              <div className="flex flex-wrap gap-3 mt-4">
+                <button
+                  disabled={!hasSteps}
+                  onClick={() => handleRunPlaywright(activeTestCase)}
+                  className={`px-4 py-2 rounded-lg ${
+                    hasSteps
+                      ? "bg-emerald-600 hover:bg-emerald-700"
+                      : "bg-slate-700 cursor-not-allowed"
+                  }`}
+                >
+                  Generovat Playwright test
+                </button>
 
-              {/* ADDITIONAL */}
+                <button
+                  disabled={!hasSteps}
+                  onClick={() => handleDownloadSpec(activeTestCase)}
+                  className={`px-4 py-2 rounded-lg ${
+                    hasSteps
+                      ? "bg-indigo-600 hover:bg-indigo-700"
+                      : "bg-slate-700 cursor-not-allowed"
+                  }`}
+                >
+                  <FaDownload className="inline mr-2" />
+                  Stáhnout Playwright test (.spec.ts)
+                </button>
+
+                <button
+                  onClick={() => handleExportToJira(activeTestCase)}
+                  disabled={jiraLoading}
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700"
+                >
+                  <FaJira className="inline mr-2" />
+                  Exportovat test case do JIRA
+                </button>
+              </div>
+
+              {jiraResult && (
+                <div className="mt-4 text-sm bg-slate-800 border border-slate-700 rounded-lg p-3">
+                  <span className="text-emerald-400 font-semibold">
+                    JIRA issue vytvořeno:
+                  </span>{" "}
+                  <a
+                    href={jiraResult.issueUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-400 underline inline-flex items-center gap-1"
+                  >
+                    {jiraResult.issueKey}
+                    <FaExternalLinkAlt />
+                  </a>
+                </div>
+              )}
+
+              {/* ADDITIONAL TEST CASES */}
               <div className="mt-6">
                 <h4 className="flex items-center gap-2 text-sm mb-2">
                   <FaChevronDown /> Další testovací případy (
@@ -249,7 +320,7 @@ export default function TestScenariosPage() {
                   {scenario.additionalTestCases.map((tc: any) => (
                     <button
                       key={tc.id}
-                      onClick={() => handleSelectTestCase(tc)}
+                      onClick={() => setActiveTestCase(tc)}
                       className={`w-full text-left p-3 rounded-lg border ${
                         activeTestCase.id === tc.id
                           ? "border-indigo-500 bg-slate-800"
@@ -271,11 +342,7 @@ export default function TestScenariosPage() {
                 Expert QA Insight
               </h3>
 
-              {!hasSteps ? (
-                <p className="text-sm italic text-slate-400">
-                  Nejprve vygeneruj kroky testu.
-                </p>
-              ) : hasInsight ? (
+              {hasFullInsight ? (
                 <div className="space-y-6 text-sm">
                   <section>
                     <h4 className="flex items-center gap-2 font-semibold mb-1">
@@ -334,8 +401,8 @@ export default function TestScenariosPage() {
                   className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700"
                 >
                   {loadingInsight
-                    ? "Generuji Expert Insight…"
-                    : "Generate Expert Insight"}
+                    ? "Generuji Expert QA Insight…"
+                    : "Generovat Expert QA Insight"}
                 </button>
               )}
             </div>
