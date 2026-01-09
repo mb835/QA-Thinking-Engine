@@ -1,19 +1,12 @@
-app.post('/api/tests/run', (req, res) => {
-  const { testFile } = req.body;
+import { test, expect } from '@playwright/test';
 
-  const pw = spawn(
-    'npx',
-    ['playwright', 'test', testFile],
-    {
-      shell: true,
-      env: {
-        ...process.env (important!)
-      },
-    }
-  );
+test('SauceDemo – login a přechod do inventory', async ({ page }) => {
+  await page.goto('https://www.saucedemo.com/');
 
-  pw.stdout.on('data', d => console.log(d.toString()));
-  pw.stderr.on('data', d => console.error(d.toString()));
+  await page.getByPlaceholder('Username').fill('standard_user');
+  await page.getByPlaceholder('Password').fill('secret_sauce');
 
-  res.json({ status: 'started' });
+  await page.getByRole('button', { name: 'Login' }).click();
+
+  await expect(page).toHaveURL(/inventory/);
 });

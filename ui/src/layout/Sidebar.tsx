@@ -25,7 +25,7 @@ export default function Sidebar() {
   return (
     <aside className="w-64 min-h-screen bg-gradient-to-b from-[#0b1220] to-[#060b18] text-white border-r border-white/10">
       <div className="px-6 py-5 text-xl font-bold tracking-wide">
-        QA AI Agent
+        QA Thinking Engine
       </div>
 
       <nav className="mt-6 flex flex-col gap-1 px-3">

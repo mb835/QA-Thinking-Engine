@@ -1,19 +1,31 @@
-app.post('/api/tests/run', (req, res) => {
-  const { testFile } = req.body;
+import { defineConfig, devices } from '@playwright/test';
 
-  const pw = spawn(
-    'npx',
-    ['playwright', 'test', testFile],
+export default defineConfig({
+  testDir: './tests',
+
+  timeout: 60_000,
+
+  expect: {
+    timeout: 10_000,
+  },
+
+  fullyParallel: false,
+
+  retries: 0,
+
+  reporter: 'list',
+
+  use: {
+    headless: false, // ať vidíš browser
+    trace: 'on-first-retry',
+    video: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+  },
+
+  projects: [
     {
-      shell: true,
-      env: {
-        ...process.env (important!)
-      },
-    }
-  );
-
-  pw.stdout.on('data', d => console.log(d.toString()));
-  pw.stderr.on('data', d => console.error(d.toString()));
-
-  res.json({ status: 'started' });
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+  ],
 });
