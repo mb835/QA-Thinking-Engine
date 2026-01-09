@@ -4,13 +4,14 @@ import dotenv from "dotenv";
 import OpenAI from "openai";
 import fetch from "node-fetch";
 import { spawn } from "child_process";
-console.log("🔥 SERVER VERSION: JIRA ADF EXPORT ENABLED");
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+console.log("🔥 SERVER VERSION: JIRA EPIC EXPORT ENABLED");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -266,21 +267,22 @@ STRUKTURA:
 });
 
 /* =========================
-   ⭐ JIRA – ADF DESCRIPTION BUILDER
+   🔥 JIRA EPIC EXPORT
 ========================= */
-function text(text: string) {
+
+function textNode(text: string) {
   return { type: "text", text };
 }
 
-function paragraph(textValue: string) {
-  return { type: "paragraph", content: [text(textValue)] };
+function paragraph(text: string) {
+  return { type: "paragraph", content: [textNode(text)] };
 }
 
-function heading(level: number, textValue: string) {
+function heading(text: string) {
   return {
     type: "heading",
-    attrs: { level },
-    content: [text(textValue)],
+    attrs: { level: 3 },
+    content: [textNode(text)],
   };
 }
 
@@ -289,7 +291,7 @@ function bulletList(items: string[]) {
     type: "bulletList",
     content: items.map((i) => ({
       type: "listItem",
-      content: [{ type: "paragraph", content: [text(i)] }],
+      content: [{ type: "paragraph", content: [textNode(i)] }],
     })),
   };
 }
@@ -299,43 +301,44 @@ function orderedList(items: string[]) {
     type: "orderedList",
     content: items.map((i) => ({
       type: "listItem",
-      content: [{ type: "paragraph", content: [text(i)] }],
+      content: [{ type: "paragraph", content: [textNode(i)] }],
     })),
   };
 }
 
-function buildJiraADFDescription(testCase: any) {
+function buildJiraADF(testCase: any) {
   const content: any[] = [];
 
-  content.push(heading(2, testCase.title));
+  content.push(heading(testCase.title));
   content.push(paragraph(`Typ: ${testCase.type}`));
   content.push(paragraph(testCase.description || ""));
 
   if (testCase.steps?.length) {
-    content.push(heading(3, "Testovací kroky"));
+    content.push(heading("Testovací kroky"));
     content.push(orderedList(testCase.steps));
   }
 
-  content.push(heading(3, "Očekávaný výsledek"));
+  content.push(heading("Očekávaný výsledek"));
   content.push(paragraph(testCase.expectedResult || ""));
 
   if (testCase.qaInsight) {
-    content.push(heading(3, "Expert QA Insight"));
-    content.push(heading(4, "Proč je test klíčový"));
+    content.push(heading("Expert QA Insight"));
+
+    content.push(heading("Proč je test klíčový"));
     content.push(paragraph(testCase.qaInsight.reasoning || ""));
 
     if (testCase.qaInsight.coverage?.length) {
-      content.push(heading(4, "Pokrytí"));
+      content.push(heading("Pokrytí"));
       content.push(bulletList(testCase.qaInsight.coverage));
     }
 
     if (testCase.qaInsight.risks?.length) {
-      content.push(heading(4, "Rizika"));
+      content.push(heading("Rizika"));
       content.push(bulletList(testCase.qaInsight.risks));
     }
 
     if (testCase.qaInsight.automationTips?.length) {
-      content.push(heading(4, "Doporučení pro Playwright"));
+      content.push(heading("Doporučení pro Playwright"));
       content.push(bulletList(testCase.qaInsight.automationTips));
     }
   }
@@ -347,9 +350,6 @@ function buildJiraADFDescription(testCase: any) {
   };
 }
 
-/* =========================
-   ⭐ JIRA – EXPORT JEDNOHO TEST CASE (ADF)
-========================= */
 app.post("/api/integrations/jira/export", async (req, res) => {
   const { testCase } = req.body;
 
@@ -375,15 +375,19 @@ app.post("/api/integrations/jira/export", async (req, res) => {
           fields: {
             project: { key: process.env.JIRA_PROJECT_KEY },
             summary: testCase.title,
-            issuetype: { name: "Task" },
-            description: buildJiraADFDescription(testCase),
-            labels: ["qa-thinking-engine", "e2e", "ai-generated"],
+            issuetype: { id: "10005" }, // 👉 EPIC
+            description: buildJiraADF(testCase),
           },
         }),
       }
     );
 
     const data = await response.json();
+
+    if (!response.ok) {
+      console.error("JIRA ERROR:", data);
+      return res.status(500).json({ error: data });
+    }
 
     res.json({
       issueKey: data.key,
@@ -393,33 +397,6 @@ app.post("/api/integrations/jira/export", async (req, res) => {
     console.error("JIRA EXPORT ERROR:", error);
     res.status(500).json({ error: String(error) });
   }
-});
-
-/* =========================
-   ▶️ PLAYWRIGHT – RUN TEST
-========================= */
-app.post("/api/tests/run", (req, res) => {
-  const { testFile, browser = "firefox" } = req.body;
-
-  if (!testFile || typeof testFile !== "string") {
-    return res.status(400).json({ error: "Chybí testFile." });
-  }
-
-  const pw = spawn(
-    "npx",
-    ["playwright", "test", testFile, `--project=${browser}`],
-    {
-      shell: true,
-      env: {
-        ...process.env,
-      },
-    }
-  );
-
-  pw.stdout.on("data", (d) => console.log(d.toString()));
-  pw.stderr.on("data", (d) => console.error(d.toString()));
-
-  res.json({ status: "started", browser, testFile });
 });
 
 /* =========================

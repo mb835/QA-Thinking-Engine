@@ -41,9 +41,12 @@ export default function TestScenariosPage() {
   const [loadingStepsId, setLoadingStepsId] = useState<string | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(false);
   const [pwLoadingId, setPwLoadingId] = useState<string | null>(null);
-  const [jiraLoading, setJiraLoading] = useState(false);
+  const [jiraLoadingId, setJiraLoadingId] = useState<string | null>(null);
 
-  const [jiraResult, setJiraResult] = useState<JiraExportResult | null>(null);
+  // ✅ JIRA RESULT PER TEST CASE
+  const [jiraResults, setJiraResults] = useState<
+    Record<string, JiraExportResult>
+  >({});
 
   /* =========================
      GENERATE SCENARIO
@@ -56,7 +59,7 @@ export default function TestScenariosPage() {
       const data = await generateScenario(intent);
       setScenario(data.testCase);
       setActiveTestCase(data.testCase);
-      setJiraResult(null);
+      setJiraResults({});
     } finally {
       setLoading(false);
     }
@@ -139,35 +142,41 @@ export default function TestScenariosPage() {
   }
 
   /* =========================
-     JIRA EXPORT
+     JIRA EXPORT – PER TEST CASE
   ========================= */
   async function handleExportToJira(tc: any) {
     try {
-      setJiraLoading(true);
-      setJiraResult(null);
+      setJiraLoadingId(tc.id);
 
       const result = await exportToJira(tc);
-      setJiraResult(result);
+
+      setJiraResults((prev) => ({
+        ...prev,
+        [tc.id]: result,
+      }));
     } catch {
       alert("❌ Chyba při exportu do JIRA");
     } finally {
-      setJiraLoading(false);
+      setJiraLoadingId(null);
     }
   }
 
   /* =========================
-     DERIVED STATE (🔥 FIX)
+     DERIVED STATE
   ========================= */
   const isAcceptance = activeTestCase?.id === scenario?.id;
   const hasSteps = Array.isArray(activeTestCase?.steps);
 
-  // 🔥 KLÍČOVÝ FIX – insight musí být KOMPLETNÍ
   const hasFullInsight =
     activeTestCase?.qaInsight &&
     activeTestCase.qaInsight.reasoning &&
     activeTestCase.qaInsight.coverage?.length > 0 &&
     activeTestCase.qaInsight.risks?.length > 0 &&
     activeTestCase.qaInsight.automationTips?.length > 0;
+
+  const jiraResultForActive = activeTestCase
+    ? jiraResults[activeTestCase.id]
+    : null;
 
   return (
     <div className="px-8 py-6 relative">
@@ -284,26 +293,28 @@ export default function TestScenariosPage() {
 
                 <button
                   onClick={() => handleExportToJira(activeTestCase)}
-                  disabled={jiraLoading}
+                  disabled={jiraLoadingId === activeTestCase.id}
                   className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700"
                 >
                   <FaJira className="inline mr-2" />
-                  Exportovat test case do JIRA
+                  {jiraLoadingId === activeTestCase.id
+                    ? "Exportuji do JIRA…"
+                    : "Exportovat test case do JIRA"}
                 </button>
               </div>
 
-              {jiraResult && (
+              {jiraResultForActive && (
                 <div className="mt-4 text-sm bg-slate-800 border border-slate-700 rounded-lg p-3">
                   <span className="text-emerald-400 font-semibold">
                     JIRA issue vytvořeno:
                   </span>{" "}
                   <a
-                    href={jiraResult.issueUrl}
+                    href={jiraResultForActive.issueUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-indigo-400 underline inline-flex items-center gap-1"
                   >
-                    {jiraResult.issueKey}
+                    {jiraResultForActive.issueKey}
                     <FaExternalLinkAlt />
                   </a>
                 </div>
