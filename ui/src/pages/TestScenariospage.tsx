@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FaClipboardList,
   FaChevronDown,
@@ -54,6 +54,10 @@ export default function TestScenariosPage() {
     Record<string, JiraIssue>
   >({});
 
+  // ASYNC EXPORT JOB STATE
+  const [exportJobId, setExportJobId] = useState<string | null>(null);
+  const [exportStatus, setExportStatus] = useState<any>(null);
+
   /* =========================
      GENERATE SCENARIO
   ========================= */
@@ -67,6 +71,9 @@ export default function TestScenariosPage() {
       setActiveTestCase(data.testCase);
       setScenarioJiraResult(null);
       setSingleJiraResults({});
+    } catch (e) {
+      console.error(e);
+      alert("❌ Chyba při generování scénáře");
     } finally {
       setLoading(false);
     }
@@ -78,7 +85,11 @@ export default function TestScenariosPage() {
   async function handleGenerateSteps(tc: any) {
     try {
       setLoadingStepsId(tc.id);
-      const data = await generateAdditionalSteps(tc);
+
+      const sourceTc =
+        scenario?.additionalTestCases?.find((t: any) => t.id === tc.id) || tc;
+
+      const data = await generateAdditionalSteps(sourceTc);
 
       setScenario((prev: any) => ({
         ...prev,
@@ -88,6 +99,9 @@ export default function TestScenariosPage() {
       }));
 
       setActiveTestCase((prev: any) => ({ ...prev, ...data }));
+    } catch (e) {
+      console.error(e);
+      alert("❌ Chyba při generování kroků");
     } finally {
       setLoadingStepsId(null);
     }
@@ -99,7 +113,11 @@ export default function TestScenariosPage() {
   async function handleGenerateInsight(tc: any) {
     try {
       setLoadingInsight(true);
-      const data = await generateExpertInsight(tc);
+
+      const sourceTc =
+        scenario?.additionalTestCases?.find((t: any) => t.id === tc.id) || tc;
+
+      const data = await generateExpertInsight(sourceTc);
 
       setScenario((prev: any) => {
         if (prev.id === tc.id) return { ...prev, qaInsight: data.qaInsight };
@@ -113,6 +131,9 @@ export default function TestScenariosPage() {
       });
 
       setActiveTestCase((prev: any) => ({ ...prev, qaInsight: data.qaInsight }));
+    } catch (e) {
+      console.error(e);
+      alert("❌ Chyba při generování Expert QA Insight");
     } finally {
       setLoadingInsight(false);
     }
@@ -126,7 +147,8 @@ export default function TestScenariosPage() {
       setPwLoadingId(tc.id);
       await runPlaywright(tc);
       alert("✅ Playwright test byl vygenerován");
-    } catch {
+    } catch (e) {
+      console.error(e);
       alert("❌ Chyba při generování Playwright testu");
     } finally {
       setPwLoadingId(null);
@@ -142,32 +164,84 @@ export default function TestScenariosPage() {
   ========================= */
   async function handleExportSingleTestCase(tc: any) {
     try {
-      const result = await exportToJira(tc);
+      const sourceTc =
+        scenario?.additionalTestCases?.find((t: any) => t.id === tc.id) || tc;
+
+      const result = await exportToJira(sourceTc);
       setSingleJiraResults((prev) => ({
         ...prev,
         [tc.id]: { key: result.issueKey, url: result.issueUrl },
       }));
-    } catch {
+    } catch (e) {
+      console.error(e);
       alert("❌ Chyba při exportu test case do JIRA");
     }
   }
 
   /* =========================
-     SCENARIO JIRA EXPORT
+     SCENARIO JIRA EXPORT (ASYNC JOB)
   ========================= */
   async function handleExportWholeScenario() {
     if (!scenario) return;
 
     try {
       setScenarioExportLoading(true);
-      const result = await exportScenarioToJira(scenario);
-      setScenarioJiraResult(result);
-    } catch {
-      alert("❌ Chyba při exportu scénáře do JIRA");
-    } finally {
+      setScenarioJiraResult(null);
+      setExportStatus(null);
+
+      const res = await fetch(
+        "http://localhost:3000/api/integrations/jira/export-scenario",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ testCase: scenario }),
+        }
+      );
+
+      const data = await res.json();
+      setExportJobId(data.jobId);
+    } catch (e) {
+      console.error(e);
+      alert("❌ Chyba při spuštění exportu scénáře do JIRA");
       setScenarioExportLoading(false);
     }
   }
+
+  /* =========================
+     EXPORT STATUS POLLING
+  ========================= */
+  useEffect(() => {
+    if (!exportJobId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:3000/api/integrations/jira/export-status/${exportJobId}`
+        );
+        const data = await res.json();
+
+        setExportStatus(data);
+
+        if (data.status === "done") {
+          setScenarioJiraResult(data.result || null);
+          setScenarioExportLoading(false);
+          clearInterval(interval);
+        }
+
+        if (data.status === "error") {
+          alert("❌ Export do JIRA selhal – zkontroluj backend log");
+          setScenarioExportLoading(false);
+          clearInterval(interval);
+        }
+      } catch (err) {
+        console.error("Polling failed:", err);
+        setScenarioExportLoading(false);
+        clearInterval(interval);
+      }
+    }, 600);
+
+    return () => clearInterval(interval);
+  }, [exportJobId]);
 
   /* =========================
      DERIVED
@@ -183,7 +257,7 @@ export default function TestScenariosPage() {
     activeTestCase.qaInsight.automationTips?.length > 0;
 
   const taskForActive =
-    scenarioJiraResult?.tasks.find((t) => t.id === activeTestCase?.id) || null;
+    scenarioJiraResult?.tasks?.find((t) => t.id === activeTestCase?.id) || null;
 
   const singleExport = singleJiraResults[activeTestCase?.id];
 
@@ -224,6 +298,27 @@ export default function TestScenariosPage() {
               </button>
             )}
           </div>
+
+          {/* PROGRESS BAR */}
+          {exportStatus && exportStatus.status === "running" && (
+            <div className="mt-4">
+              <div className="text-xs mb-1 text-slate-400">
+                Export do JIRA: {exportStatus.done} / {exportStatus.total}
+              </div>
+              <div className="w-full bg-slate-800 rounded h-2">
+                <div
+                  className="bg-emerald-500 h-2 rounded transition-all"
+                  style={{
+                    width: `${
+                      exportStatus.total
+                        ? (exportStatus.done / exportStatus.total) * 100
+                        : 0
+                    }%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
           {scenarioJiraResult && (
             <div className="mt-3 text-sm text-emerald-400">

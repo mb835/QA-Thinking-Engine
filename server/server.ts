@@ -1,21 +1,41 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-console.log("👉 JIRA PROJECT KEY:", process.env.JIRA_PROJECT_KEY);
 import OpenAI from "openai";
 import fetch from "node-fetch";
+import { randomUUID } from "crypto";
 
+/* =========================
+   ENV INIT
+========================= */
 dotenv.config();
+
+console.log("👉 JIRA PROJECT KEY:", process.env.JIRA_PROJECT_KEY);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-console.log("🔥 SERVER VERSION: JIRA EXPORT TESTCASE + SCENARIO");
+console.log("🔥 SERVER VERSION: JIRA EXPORT ASYNC + PROGRESS + PARALLEL AI");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+/* =========================
+   IN-MEMORY JOB STORE
+========================= */
+
+type ExportJob = {
+  id: string;
+  total: number;
+  done: number;
+  status: "running" | "done" | "error";
+  result?: any;
+  error?: any;
+};
+
+const exportJobs: Record<string, ExportJob> = {};
 
 /* =========================
    HEALTH CHECK
@@ -86,8 +106,23 @@ TESTOVACÍ ZÁMĚR:
 }
 
 /* =========================
-   AI CALL WITH RETRY
+   RETRY HELPER
 ========================= */
+
+async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (retries <= 0) throw err;
+    console.warn("🔁 AI retry...");
+    return withRetry(fn, retries - 1);
+  }
+}
+
+/* =========================
+   AI HELPERS
+========================= */
+
 async function generateScenarioWithRetry(intent: string) {
   let attempt = 0;
   let lastResult: any = null;
@@ -135,42 +170,8 @@ async function generateScenarioWithRetry(intent: string) {
   };
 }
 
-/* =========================
-   AI – GENERATE SCENARIO
-========================= */
-app.post("/api/scenarios", async (req, res) => {
-  const { intent } = req.body;
-
-  if (!intent || typeof intent !== "string") {
-    return res.status(400).json({
-      error: "Chybí nebo je neplatný testovací záměr.",
-    });
-  }
-
-  try {
-    const result = await generateScenarioWithRetry(intent);
-    res.json(result);
-  } catch (error) {
-    console.error("AI ERROR:", error);
-    res.status(500).json({
-      error: "Chyba při generování QA analýzy",
-      details: String(error),
-    });
-  }
-});
-
-/* =========================
-   AI – GENERATE STEPS
-========================= */
-app.post("/api/scenarios/additional/steps", async (req, res) => {
-  const { additionalTestCase } = req.body;
-
-  if (!additionalTestCase?.id || !additionalTestCase?.type) {
-    return res.status(400).json({ error: "Neplatný test case." });
-  }
-
-  try {
-    const prompt = `
+async function generateStepsForTest(testCase: any) {
+  const prompt = `
 VRAŤ POUZE VALIDNÍ JSON.
 
 Jsi senior QA automation expert.
@@ -178,9 +179,9 @@ Používáš Playwright.
 
 Vygeneruj kroky pro test:
 
-TYP: ${additionalTestCase.type}
-NÁZEV: ${additionalTestCase.title}
-POPIS: ${additionalTestCase.description}
+TYP: ${testCase.type}
+NÁZEV: ${testCase.title}
+POPIS: ${testCase.description}
 
 STRUKTURA:
 {
@@ -189,41 +190,30 @@ STRUKTURA:
 }
 `;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: "Odpověz pouze jako JSON." },
-        { role: "user", content: prompt },
-      ],
-    });
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0.2,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: "Odpověz pouze jako JSON." },
+      { role: "user", content: prompt },
+    ],
+  });
 
-    const content = completion.choices[0].message.content;
-    if (!content) throw new Error("AI nevrátila žádný obsah.");
+  const content = completion.choices[0].message.content;
+  if (!content) throw new Error("AI nevrátila žádný obsah.");
 
-    res.json(JSON.parse(content));
-  } catch (error) {
-    console.error("AI ERROR:", error);
-    res.status(500).json({
-      error: "Chyba při generování kroků",
-      details: String(error),
-    });
-  }
-});
+  const parsed = JSON.parse(content);
 
-/* =========================
-   AI – GENERATE EXPERT INSIGHT
-========================= */
-app.post("/api/scenarios/insight", async (req, res) => {
-  const { testCase } = req.body;
+  return {
+    ...testCase,
+    steps: parsed.steps,
+    expectedResult: parsed.expectedResult || testCase.expectedResult,
+  };
+}
 
-  if (!testCase?.title || !testCase?.type) {
-    return res.status(400).json({ error: "Neplatný test case." });
-  }
-
-  try {
-    const prompt = `
+async function generateInsightForTest(testCase: any) {
+  const prompt = `
 VRAŤ POUZE VALIDNÍ JSON.
 
 Jsi senior QA expert.
@@ -243,24 +233,41 @@ STRUKTURA:
 }
 `;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.25,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: "Odpověz pouze jako JSON." },
-        { role: "user", content: prompt },
-      ],
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0.25,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: "Odpověz pouze jako JSON." },
+      { role: "user", content: prompt },
+    ],
+  });
+
+  const content = completion.choices[0].message.content;
+  if (!content) throw new Error("AI nevrátila žádný obsah.");
+
+  return JSON.parse(content);
+}
+
+/* =========================
+   AI – GENERATE SCENARIO
+========================= */
+app.post("/api/scenarios", async (req, res) => {
+  const { intent } = req.body;
+
+  if (!intent || typeof intent !== "string") {
+    return res.status(400).json({
+      error: "Chybí nebo je neplatný testovací záměr.",
     });
+  }
 
-    const content = completion.choices[0].message.content;
-    if (!content) throw new Error("AI nevrátila žádný obsah.");
-
-    res.json({ qaInsight: JSON.parse(content) });
+  try {
+    const result = await generateScenarioWithRetry(intent);
+    res.json(result);
   } catch (error) {
     console.error("AI ERROR:", error);
     res.status(500).json({
-      error: "Chyba při generování Expert Insight",
+      error: "Chyba při generování QA analýzy",
       details: String(error),
     });
   }
@@ -351,6 +358,45 @@ function buildJiraADF(testCase: any) {
 }
 
 /* =========================
+   JIRA ISSUE TYPE RESOLVER
+========================= */
+
+async function getProjectIssueTypes() {
+  const res = await fetch(
+    `${process.env.JIRA_BASE_URL}/rest/api/3/project/${process.env.JIRA_PROJECT_KEY}`,
+    {
+      headers: {
+        Authorization:
+          "Basic " +
+          Buffer.from(
+            `${process.env.JIRA_EMAIL}:${process.env.JIRA_API_TOKEN}`
+          ).toString("base64"),
+        Accept: "application/json",
+      },
+    }
+  );
+
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data.issueTypes;
+}
+
+async function resolveIssueTypes() {
+  const types = await getProjectIssueTypes();
+
+  const epicType =
+    types.find((t: any) => t.hierarchyLevel === 1) || types[0];
+
+  const taskType =
+    types.find((t: any) => t.hierarchyLevel === 0) || types[0];
+
+  console.log("🟣 JIRA EPIC TYPE:", epicType.name, epicType.id);
+  console.log("🔵 JIRA TASK TYPE:", taskType.name, taskType.id);
+
+  return { epicType, taskType };
+}
+
+/* =========================
    JIRA CREATE ISSUE
 ========================= */
 async function createJiraIssue(fields: any) {
@@ -377,78 +423,112 @@ async function createJiraIssue(fields: any) {
 }
 
 /* =========================
-   ⭐ JIRA – EXPORT SINGLE TEST CASE
-========================= */
-app.post("/api/integrations/jira/export-testcase", async (req, res) => {
-  const { testCase } = req.body;
-
-  try {
-    const issue = await createJiraIssue({
-      project: { key: process.env.JIRA_PROJECT_KEY },
-      summary: `[${testCase.type}] ${testCase.title}`,
-
-      // ✅ MUSÍ BÝT ID – NE NAME
-      issuetype: { id: "10003" }, // Task v projektu 10000
-
-      description: buildJiraADF(testCase),
-    });
-
-    res.json({
-      issueKey: issue.key,
-      issueUrl: `${process.env.JIRA_BASE_URL}/browse/${issue.key}`,
-    });
-  } catch (error) {
-    console.error("JIRA TESTCASE EXPORT ERROR:", error);
-    res.status(500).json({ error });
-  }
-});
-
-/* =========================
-   ⭐ JIRA – EXPORT WHOLE SCENARIO (EPIC + TASKS)
+   ⭐ START ASYNC EXPORT JOB
 ========================= */
 app.post("/api/integrations/jira/export-scenario", async (req, res) => {
   const { testCase } = req.body;
 
-  try {
-    // ===== CREATE EPIC =====
-    const epic = await createJiraIssue({
-      project: { key: process.env.JIRA_PROJECT_KEY },
-      summary: `[SCENARIO] ${testCase.title}`,
-      issuetype: { id: "10001" }, // Epic v projektu 10000
-      description: buildJiraADF(testCase),
-    });
+  const jobId = randomUUID();
 
-    const tasks = [];
+  exportJobs[jobId] = {
+    id: jobId,
+    total: 0,
+    done: 0,
+    status: "running",
+  };
 
-    const allCases = [testCase, ...(testCase.additionalTestCases || [])];
+  res.json({ jobId });
 
-    for (const tc of allCases) {
-      const task = await createJiraIssue({
+  (async () => {
+    try {
+      const { epicType, taskType } = await resolveIssueTypes();
+
+      let allCases = [testCase, ...(testCase.additionalTestCases || [])];
+
+      exportJobs[jobId].total = allCases.length * 2 + 1;
+
+      const enriched = await Promise.all(
+        allCases.map(async (tc) => {
+          let updated = tc;
+
+          if (!updated.steps?.length) {
+            updated = await withRetry(() => generateStepsForTest(updated), 2);
+          }
+          exportJobs[jobId].done++;
+
+          if (!updated.qaInsight) {
+            updated.qaInsight = await withRetry(
+              () => generateInsightForTest(updated),
+              2
+            );
+          }
+          exportJobs[jobId].done++;
+
+          return updated;
+        })
+      );
+
+      const epic = await createJiraIssue({
         project: { key: process.env.JIRA_PROJECT_KEY },
-        summary: `[${tc.type}] ${tc.title}`,
-        issuetype: { id: "10003" }, // Task
-        parent: { key: epic.key },
-        description: buildJiraADF(tc),
+        summary: `[SCENARIO] ${testCase.title}`,
+        issuetype: { id: epicType.id },
+        description: {
+          type: "doc",
+          version: 1,
+          content: [
+            heading(testCase.title),
+            paragraph(testCase.description || ""),
+          ],
+        },
       });
 
-      tasks.push({
-        id: tc.id,
-        key: task.key,
-        url: `${process.env.JIRA_BASE_URL}/browse/${task.key}`,
-      });
+      exportJobs[jobId].done++;
+
+      const tasks = [];
+
+      for (const tc of enriched) {
+        const task = await createJiraIssue({
+          project: { key: process.env.JIRA_PROJECT_KEY },
+          summary: `[${tc.type}] ${tc.title}`,
+          issuetype: { id: taskType.id },
+          parent: { key: epic.key },
+          description: buildJiraADF(tc),
+        });
+
+        tasks.push({
+          id: tc.id,
+          key: task.key,
+          url: `${process.env.JIRA_BASE_URL}/browse/${task.key}`,
+        });
+      }
+
+      exportJobs[jobId].status = "done";
+      exportJobs[jobId].result = {
+        epic: {
+          key: epic.key,
+          url: `${process.env.JIRA_BASE_URL}/browse/${epic.key}`,
+        },
+        tasks,
+      };
+    } catch (err) {
+      console.error("❌ EXPORT JOB FAILED:", err);
+      exportJobs[jobId].status = "error";
+      exportJobs[jobId].error = err;
     }
+  })();
+});
 
-    res.json({
-      epic: {
-        key: epic.key,
-        url: `${process.env.JIRA_BASE_URL}/browse/${epic.key}`,
-      },
-      tasks,
-    });
-  } catch (error) {
-    console.error("JIRA SCENARIO EXPORT ERROR:", error);
-    res.status(500).json({ error });
+/* =========================
+   ⭐ EXPORT STATUS
+========================= */
+app.get("/api/integrations/jira/export-status/:id", (req, res) => {
+  const job = exportJobs[req.params.id];
+
+  if (!job) {
+    return res.status(404).json({ error: "Job not found" });
   }
+
+  res.json(job);
 });
 
 /* =========================
