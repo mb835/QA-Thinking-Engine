@@ -4,14 +4,15 @@ type Phase = {
   label: string;
   hint: string;
   targetProgress: number;
+  color: string;
 };
 
 const PHASES: Phase[] = [
-  { label: "Analyzuji testovací záměr", hint: "Understanding intent", targetProgress: 20 },
-  { label: "Identifikuji kritický business flow", hint: "Value detection", targetProgress: 40 },
-  { label: "Navrhuji acceptance test", hint: "Happy-path modeling", targetProgress: 60 },
-  { label: "Mapuji rizika a odchylky", hint: "Risk surface analysis", targetProgress: 80 },
-  { label: "Finalizuji QA expert insight", hint: "Senior QA reasoning", targetProgress: 100 },
+  { label: "Analyzuji testovací záměr", hint: "Understanding intent", targetProgress: 20, color: "#38bdf8" },
+  { label: "Identifikuji kritický business flow", hint: "Value detection", targetProgress: 40, color: "#818cf8" },
+  { label: "Navrhuji acceptance test", hint: "Happy-path modeling", targetProgress: 60, color: "#a78bfa" },
+  { label: "Mapuji rizika a odchylky", hint: "Risk surface analysis", targetProgress: 80, color: "#fb923c" },
+  { label: "Finalizuji QA expert insight", hint: "Senior QA reasoning", targetProgress: 100, color: "#4ade80" },
 ];
 
 export default function LoadingOverlay() {
@@ -38,7 +39,7 @@ export default function LoadingOverlay() {
           return p;
         }
 
-        const step = p < 30 ? 0.9 : p < 60 ? 0.5 : p < 85 ? 0.3 : 0.15;
+        const step = p < 30 ? 1.2 : p < 60 ? 0.7 : p < 85 ? 0.4 : 0.2;
         return Math.min(p + step, phase.targetProgress);
       });
     }, 40);
@@ -46,37 +47,53 @@ export default function LoadingOverlay() {
     return () => clearInterval(i);
   }, [phaseIndex, phase]);
 
+  const spinSpeed = 2 - progress / 100;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md">
-      <div className="flex flex-col items-center gap-10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md">
+      
+      {/* ===== PARTICLES ===== */}
+      <div className="particles">
+        {Array.from({ length: 40 }).map((_, i) => (
+          <span key={i} />
+        ))}
+      </div>
 
-        {/* ================= CORE VISUAL ================= */}
-        <div className="relative w-36 h-36">
+      <div className="flex flex-col items-center gap-10 relative z-10">
 
-          {/* OUTER ENERGY HALO */}
-          <div className="absolute inset-[-14px] rounded-full ai-halo" />
+        {/* ===== WORM LOADER ===== */}
+        <div className="loader-wrap">
+          <svg
+            viewBox="0 0 120 120"
+            className="loader-svg"
+            style={{ animationDuration: `${spinSpeed}s` }}
+          >
+            <defs>
+              <linearGradient id="wormGradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="120" y2="0">
+                <stop offset="0%" stopColor={phase.color} />
+                <stop offset="50%" stopColor="#ffffff" />
+                <stop offset="100%" stopColor={phase.color} />
+              </linearGradient>
+            </defs>
 
-          {/* ENERGY RING */}
-          <div className="absolute inset-[-6px] rounded-full ai-energy-ring" />
+            <circle cx="60" cy="60" r="46" className="loader-track" />
+            <circle cx="60" cy="60" r="46" className="loader-ghost" />
+            <circle cx="60" cy="60" r="46" className="loader-worm" />
+          </svg>
 
-          {/* CORE */}
-          <div className="absolute inset-0 rounded-full ai-core">
-            <div className="ai-noise" />
-          </div>
-
-          {/* ORBIT */}
-          <div className="absolute inset-0 ai-orbit">
-            <div className="ai-trail" />
-          </div>
+          <div
+            className="loader-glow"
+            style={{ background: `radial-gradient(circle, ${phase.color}66, transparent 65%)` }}
+          />
         </div>
 
-        {/* ================= TEXT ================= */}
+        {/* ===== TEXT ===== */}
         <div className="text-center max-w-sm space-y-2">
           <div className="text-xs uppercase tracking-[0.35em] text-indigo-400">
             AI PROCESSING
           </div>
 
-          <div className="text-sm text-slate-200">
+          <div className="text-sm text-slate-200 glitch">
             {phase.label}
             <span className="inline-block w-2">{caret ? "▍" : ""}</span>
           </div>
@@ -85,12 +102,11 @@ export default function LoadingOverlay() {
             {phase.hint}
           </div>
 
-          {/* PROGRESS */}
           <div className="mt-4">
             <div className="h-1.5 w-64 rounded-full bg-slate-800 overflow-hidden">
               <div
-                className="h-full bg-indigo-500 transition-all duration-300"
-                style={{ width: `${progress}%` }}
+                className="h-full transition-all duration-300"
+                style={{ width: `${progress}%`, background: phase.color }}
               />
             </div>
             <div className="text-[10px] text-slate-500 mt-1">
@@ -102,78 +118,112 @@ export default function LoadingOverlay() {
 
       {/* ================= STYLES ================= */}
       <style>{`
-        .ai-core {
-          background: radial-gradient(circle at 30% 30%, #a78bfa, #4f46e5);
-          box-shadow: 0 0 120px rgba(139,92,246,0.9);
-          animation: corePulse 3s ease-in-out infinite;
+        /* PARTICLES */
+        .particles {
+          position: absolute;
+          inset: 0;
           overflow: hidden;
         }
 
-        .ai-noise {
+        .particles span {
+          position: absolute;
+          width: 2px;
+          height: 2px;
+          background: rgba(120,160,255,0.6);
+          border-radius: 50%;
+          animation: float 12s linear infinite;
+          left: calc(100% * var(--x));
+          top: 100%;
+        }
+
+        .particles span:nth-child(odd) { animation-duration: 18s; }
+        .particles span:nth-child(even) { animation-duration: 12s; }
+
+        @keyframes float {
+          from { transform: translateY(0); opacity: 0; }
+          10% { opacity: 1; }
+          to { transform: translateY(-120vh); opacity: 0; }
+        }
+
+        /* LOADER */
+        .loader-wrap {
+          position: relative;
+          width: 160px;
+          height: 160px;
+        }
+
+        .loader-svg {
+          width: 160px;
+          height: 160px;
+          animation: spin linear infinite;
+        }
+
+        .loader-track {
+          fill: none;
+          stroke: rgba(255,255,255,0.08);
+          stroke-width: 8;
+        }
+
+        .loader-worm {
+          fill: none;
+          stroke: url(#wormGradient);
+          stroke-width: 8;
+          stroke-linecap: round;
+          stroke-dasharray: 120 170;
+          animation: dashMove 1.1s ease-in-out infinite;
+          filter: drop-shadow(0 0 14px rgba(120,120,255,0.9));
+        }
+
+        .loader-ghost {
+          fill: none;
+          stroke: rgba(255,255,255,0.15);
+          stroke-width: 8;
+          stroke-linecap: round;
+          stroke-dasharray: 60 230;
+          animation: dashGhost 1.6s ease-in-out infinite;
+        }
+
+        .loader-glow {
           position: absolute;
           inset: 0;
-          background:
-            radial-gradient(circle at 20% 80%, rgba(255,255,255,0.08), transparent 40%),
-            radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05), transparent 40%);
-          animation: noiseShift 6s ease-in-out infinite;
-        }
-
-        @keyframes noiseShift {
-          0% { transform: translate(0,0); }
-          50% { transform: translate(-4px,4px); }
-          100% { transform: translate(0,0); }
-        }
-
-        @keyframes corePulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
-        }
-
-        .ai-orbit {
-          animation: orbitSpin 4.5s linear infinite;
-        }
-
-        .ai-trail {
-          position: absolute;
-          top: -6px;
-          left: 50%;
-          width: 14px;
-          height: 14px;
-          transform: translateX(-50%);
           border-radius: 50%;
-          background: #a78bfa;
-          box-shadow:
-            0 0 20px rgba(167,139,250,0.9),
-            0 0 40px rgba(167,139,250,0.6);
+          filter: blur(28px);
+          animation: glowPulse 3s ease-in-out infinite;
         }
 
-        @keyframes orbitSpin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        @keyframes spin {
+          100% { transform: rotate(360deg); }
         }
 
-        .ai-halo {
-          background: radial-gradient(circle, rgba(139,92,246,0.35), transparent 70%);
-          filter: blur(18px);
-          animation: haloPulse 4s ease-in-out infinite;
+        @keyframes dashMove {
+          0% { stroke-dashoffset: 0; }
+          100% { stroke-dashoffset: -280; }
         }
 
-        @keyframes haloPulse {
-          0% { opacity: 0.4; }
-          50% { opacity: 0.8; }
-          100% { opacity: 0.4; }
+        @keyframes dashGhost {
+          0% { stroke-dashoffset: -200; }
+          100% { stroke-dashoffset: -480; }
         }
 
-        .ai-energy-ring {
-          border: 1px solid rgba(139,92,246,0.4);
-          box-shadow: 0 0 30px rgba(139,92,246,0.4);
-          animation: ringSpin 10s linear infinite;
+        @keyframes glowPulse {
+          0% { opacity: 0.3; }
+          50% { opacity: 0.9; }
+          100% { opacity: 0.3; }
         }
 
-        @keyframes ringSpin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(-360deg); }
+        /* GLITCH TEXT */
+        .glitch {
+          position: relative;
+          animation: glitch 2.5s infinite;
+        }
+
+        @keyframes glitch {
+          0% { text-shadow: none; }
+          20% { text-shadow: 1px 0 red, -1px 0 cyan; }
+          40% { text-shadow: none; }
+          60% { text-shadow: -1px 0 red, 1px 0 cyan; }
+          80% { text-shadow: none; }
+          100% { text-shadow: none; }
         }
       `}</style>
     </div>
