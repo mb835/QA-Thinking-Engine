@@ -45,6 +45,28 @@ app.get("/health", (_req, res) => {
 });
 
 /* =========================
+   TEST TYPE MAP (CZ)
+========================= */
+function mapTestTypeToCz(type: string) {
+  switch (type?.toUpperCase()) {
+    case "ACCEPTANCE":
+      return "Akceptační";
+    case "NEGATIVE":
+      return "Negativní";
+    case "EDGE":
+      return "Hraniční";
+    case "SECURITY":
+      return "Bezpečnostní";
+    case "UX":
+      return "Uživatelský (UX)";
+    case "DATA":
+      return "Datový";
+    default:
+      return type;
+  }
+}
+
+/* =========================
    AI PROMPT – SCENARIO
 ========================= */
 function buildScenarioPrompt(intent: string, isRetry = false) {
@@ -114,7 +136,8 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
     return await fn();
   } catch (err) {
     if (retries <= 0) throw err;
-    console.warn("🔁 AI retry...");
+    console.warn("🔁 Retry...");
+    await new Promise((r) => setTimeout(r, 1200));
     return withRetry(fn, retries - 1);
   }
 }
@@ -153,9 +176,7 @@ async function generateScenarioWithRetry(intent: string) {
     if (Array.isArray(steps) && steps.length >= 5) {
       return {
         ...parsed,
-        meta: {
-          aiStatus: attempt === 0 ? "ok" : "retried",
-        },
+        meta: { aiStatus: attempt === 0 ? "ok" : "retried" },
       };
     }
 
@@ -164,9 +185,7 @@ async function generateScenarioWithRetry(intent: string) {
 
   return {
     ...lastResult,
-    meta: {
-      aiStatus: "partial",
-    },
+    meta: { aiStatus: "partial" },
   };
 }
 
@@ -274,6 +293,34 @@ app.post("/api/scenarios", async (req, res) => {
 });
 
 /* =========================
+   AI – GENERATE STEPS
+========================= */
+app.post("/api/scenarios/additional/steps", async (req, res) => {
+  try {
+    const { additionalTestCase } = req.body;
+    const updated = await generateStepsForTest(additionalTestCase);
+    res.json(updated);
+  } catch (err) {
+    console.error("❌ Failed to generate steps:", err);
+    res.status(500).json({ error: "Failed to generate steps" });
+  }
+});
+
+/* =========================
+   AI – GENERATE INSIGHT
+========================= */
+app.post("/api/scenarios/insight", async (req, res) => {
+  try {
+    const { testCase } = req.body;
+    const insight = await generateInsightForTest(testCase);
+    res.json({ qaInsight: insight });
+  } catch (err) {
+    console.error("❌ Failed to generate insight:", err);
+    res.status(500).json({ error: "Failed to generate insight" });
+  }
+});
+
+/* =========================
    JIRA ADF HELPERS
 ========================= */
 
@@ -317,7 +364,7 @@ function buildJiraADF(testCase: any) {
   const content: any[] = [];
 
   content.push(heading(testCase.title));
-  content.push(paragraph(`Typ: ${testCase.type}`));
+  content.push(paragraph(`Typ: ${mapTestTypeToCz(testCase.type)}`));
   content.push(paragraph(testCase.description || ""));
 
   if (testCase.steps?.length) {
@@ -397,30 +444,75 @@ async function resolveIssueTypes() {
 }
 
 /* =========================
-   JIRA CREATE ISSUE
+   JIRA CREATE ISSUE (RETRY)
 ========================= */
-async function createJiraIssue(fields: any) {
-  const response = await fetch(
-    `${process.env.JIRA_BASE_URL}/rest/api/3/issue`,
-    {
-      method: "POST",
-      headers: {
-        Authorization:
-          "Basic " +
-          Buffer.from(
-            `${process.env.JIRA_EMAIL}:${process.env.JIRA_API_TOKEN}`
-          ).toString("base64"),
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ fields }),
-    }
-  );
+async function createJiraIssue(fields: any, retries = 3): Promise<any> {
+  try {
+    const response = await fetch(
+      `${process.env.JIRA_BASE_URL}/rest/api/3/issue`,
+      {
+        method: "POST",
+        headers: {
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              `${process.env.JIRA_EMAIL}:${process.env.JIRA_API_TOKEN}`
+            ).toString("base64"),
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fields }),
+      }
+    );
 
-  const data = await response.json();
-  if (!response.ok) throw data;
-  return data;
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw { status: response.status, data };
+    }
+
+    return data;
+  } catch (err) {
+    if (retries <= 0) throw err;
+    console.warn("🔁 JIRA retry...");
+    await new Promise((r) => setTimeout(r, 1500));
+    return createJiraIssue(fields, retries - 1);
+  }
 }
+
+/* =========================
+   ⭐ EXPORT SINGLE TEST CASE
+========================= */
+app.post("/api/integrations/jira/export-testcase", async (req, res) => {
+  try {
+    const { testCase } = req.body;
+
+    const { taskType } = await resolveIssueTypes();
+
+    const enriched = testCase.steps?.length
+      ? testCase
+      : await generateStepsForTest(testCase);
+
+    const withInsight = enriched.qaInsight
+      ? enriched
+      : { ...enriched, qaInsight: await generateInsightForTest(enriched) };
+
+    const task = await createJiraIssue({
+      project: { key: process.env.JIRA_PROJECT_KEY },
+      summary: `[${mapTestTypeToCz(withInsight.type)}] ${withInsight.title}`,
+      issuetype: { id: taskType.id },
+      description: buildJiraADF(withInsight),
+    });
+
+    res.json({
+      issueKey: task.key,
+      issueUrl: `${process.env.JIRA_BASE_URL}/browse/${task.key}`,
+    });
+  } catch (err) {
+    console.error("❌ Export single test failed:", err);
+    res.status(500).json({ error: "Failed to export test case to JIRA" });
+  }
+});
 
 /* =========================
    ⭐ START ASYNC EXPORT JOB
@@ -487,9 +579,11 @@ app.post("/api/integrations/jira/export-scenario", async (req, res) => {
       const tasks = [];
 
       for (const tc of enriched) {
+        await new Promise((r) => setTimeout(r, 800));
+
         const task = await createJiraIssue({
           project: { key: process.env.JIRA_PROJECT_KEY },
-          summary: `[${tc.type}] ${tc.title}`,
+          summary: `[${mapTestTypeToCz(tc.type)}] ${tc.title}`,
           issuetype: { id: taskType.id },
           parent: { key: epic.key },
           description: buildJiraADF(tc),

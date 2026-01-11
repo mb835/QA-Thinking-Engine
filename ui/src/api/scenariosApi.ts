@@ -93,10 +93,10 @@ export async function exportToJira(testCase: any): Promise<{
 
 /* =========================
    ⭐ EXPORT WHOLE SCENARIO TO JIRA
+   (returns jobId – async job)
 ========================= */
 export async function exportScenarioToJira(testCase: any): Promise<{
-  epic: { key: string; url: string };
-  tasks: { id: string; key: string; url: string }[];
+  jobId: string;
 }> {
   const res = await fetch(
     `${API_URL}/api/integrations/jira/export-scenario`,
@@ -111,6 +111,34 @@ export async function exportScenarioToJira(testCase: any): Promise<{
     const t = await res.text();
     console.error("JIRA scenario export error:", t);
     throw new Error("Failed to export scenario to JIRA");
+  }
+
+  return res.json(); // { jobId }
+}
+
+/* =========================
+   ⭐ GET EXPORT JOB STATUS
+   (for loading bar / progress)
+========================= */
+export async function getScenarioExportStatus(jobId: string): Promise<{
+  id: string;
+  total: number;
+  done: number;
+  status: "running" | "done" | "error";
+  result?: {
+    epic: { key: string; url: string };
+    tasks: { id: string; key: string; url: string }[];
+  };
+  error?: any;
+}> {
+  const res = await fetch(
+    `${API_URL}/api/integrations/jira/export-status/${jobId}`
+  );
+
+  if (!res.ok) {
+    const t = await res.text();
+    console.error("Export status error:", t);
+    throw new Error("Failed to get export status");
   }
 
   return res.json();
