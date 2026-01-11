@@ -41,7 +41,7 @@ type ScenarioJiraResult = {
 ========================= */
 function getTestTypeStyle(type: string) {
   switch (type?.toLowerCase()) {
-     case "acceptance":
+    case "acceptance":
       return {
         label: "Akceptační",
         color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/40",
@@ -113,6 +113,22 @@ export default function TestScenariosPage() {
   const [exportJobId, setExportJobId] = useState<string | null>(null);
   const [exportStatus, setExportStatus] = useState<any>(null);
 
+  /* =========================
+     DERIVED EXPORT STATE
+  ========================= */
+  const isScenarioExportRunning =
+    scenarioExportLoading || exportStatus?.status === "running";
+
+  const isScenarioAlreadyExported = !!scenarioJiraResult;
+
+  const blockSingleExport =
+    isScenarioExportRunning || isScenarioAlreadyExported;
+
+  const exportProgress =
+    exportStatus?.total > 0
+      ? Math.round((exportStatus.done / exportStatus.total) * 100)
+      : 0;
+
   async function handleGenerateScenario() {
     if (!intent.trim()) return;
 
@@ -123,6 +139,8 @@ export default function TestScenariosPage() {
       setActiveTestCase(data.testCase);
       setScenarioJiraResult(null);
       setSingleJiraResults({});
+      setExportStatus(null);
+      setExportJobId(null);
     } catch (e) {
       console.error(e);
       alert("❌ Chyba při generování scénáře");
@@ -203,6 +221,8 @@ export default function TestScenariosPage() {
   }
 
   async function handleExportSingleTestCase(tc: any) {
+    if (blockSingleExport) return;
+
     try {
       const sourceTc =
         scenario?.additionalTestCases?.find((t: any) => t.id === tc.id) || tc;
@@ -219,7 +239,7 @@ export default function TestScenariosPage() {
   }
 
   async function handleExportWholeScenario() {
-    if (!scenario) return;
+    if (!scenario || isScenarioExportRunning) return;
 
     try {
       setScenarioExportLoading(true);
@@ -324,7 +344,8 @@ export default function TestScenariosPage() {
             />
           </div>
 
-          <div className="flex justify-between mt-4">
+          {/* BUTTON ROW */}
+          <div className="flex justify-between items-start mt-4 gap-4">
             <button
               onClick={handleGenerateScenario}
               className="neon-button neon-pulse"
@@ -333,19 +354,41 @@ export default function TestScenariosPage() {
             </button>
 
             {scenario && (
-              <button
-                onClick={handleExportWholeScenario}
-                disabled={scenarioExportLoading}
-                className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700"
-              >
-                <FaJira className="inline mr-2" />
-                {scenarioExportLoading
-                  ? "Exportuji celý scénář…"
-                  : "Exportovat celý scénář do JIRA"}
-              </button>
+              <div className="flex flex-col items-end gap-2">
+                <button
+                  onClick={handleExportWholeScenario}
+                  disabled={isScenarioExportRunning}
+                  className={`px-5 py-2 rounded-lg ${
+                    isScenarioExportRunning
+                      ? "bg-slate-700 cursor-not-allowed"
+                      : "bg-emerald-600 hover:bg-emerald-700"
+                  }`}
+                >
+                  <FaJira className="inline mr-2" />
+                  {isScenarioExportRunning
+                    ? "Exportuji celý scénář…"
+                    : "Exportovat celý scénář do JIRA"}
+                </button>
+
+                {isScenarioExportRunning && exportStatus && (
+                  <div className="w-72">
+                    <div className="h-2 bg-slate-800 rounded overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 transition-all duration-300"
+                        style={{ width: `${exportProgress}%` }}
+                      />
+                    </div>
+                    <div className="text-xs text-slate-400 text-right mt-1">
+                      {exportStatus.done}/{exportStatus.total} ({exportProgress}%)
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
+
+        {/* ZBYTEK STRÁNKY ZŮSTÁVÁ BEZE ZMĚN */}
 
         {scenario && activeTestCase && (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
@@ -370,15 +413,15 @@ export default function TestScenariosPage() {
               </h2>
 
               {(() => {
-              const style = getTestTypeStyle(activeTestCase.type);
-             return (
-             <span
-             className={`inline-block text-xs px-2 py-1 rounded border mb-3 ${style.color}`}
-             >
-              {style.icon} {style.label}
-             </span>
-            );
-            })()}
+                const style = getTestTypeStyle(activeTestCase.type);
+                return (
+                  <span
+                    className={`inline-block text-xs px-2 py-1 rounded border mb-3 ${style.color}`}
+                  >
+                    {style.icon} {style.label}
+                  </span>
+                );
+              })()}
 
               {singleExport && (
                 <div className="mb-3 text-xs text-emerald-400">
@@ -471,8 +514,13 @@ export default function TestScenariosPage() {
                 </button>
 
                 <button
+                  disabled={blockSingleExport}
                   onClick={() => handleExportSingleTestCase(activeTestCase)}
-                  className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700"
+                  className={`px-4 py-2 rounded-lg ${
+                    blockSingleExport
+                      ? "bg-slate-700 cursor-not-allowed"
+                      : "bg-amber-600 hover:bg-amber-700"
+                  }`}
                 >
                   <FaJira className="inline mr-2" />
                   Exportovat test case do JIRA
@@ -502,11 +550,11 @@ export default function TestScenariosPage() {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-  <span className="w-4 flex items-center justify-center">
-    {style.icon}
-  </span>
-  <span className="text-sm">{tc.title}</span>
-</div>
+                            <span className="w-4 flex items-center justify-center">
+                              {style.icon}
+                            </span>
+                            <span className="text-sm">{tc.title}</span>
+                          </div>
 
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded border ${style.color}`}
