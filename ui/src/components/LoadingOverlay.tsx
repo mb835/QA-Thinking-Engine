@@ -8,11 +8,36 @@ type Phase = {
 };
 
 const PHASES: Phase[] = [
-  { label: "Analyzuji testovací záměr", hint: "Understanding intent", targetProgress: 20, color: "#38bdf8" },
-  { label: "Identifikuji kritický business flow", hint: "Value detection", targetProgress: 40, color: "#818cf8" },
-  { label: "Navrhuji acceptance test", hint: "Happy-path modeling", targetProgress: 60, color: "#a78bfa" },
-  { label: "Mapuji rizika a odchylky", hint: "Risk surface analysis", targetProgress: 80, color: "#fb923c" },
-  { label: "Finalizuji QA expert insight", hint: "Senior QA reasoning", targetProgress: 100, color: "#4ade80" },
+  {
+    label: "Analyzuji testovací záměr",
+    hint: "Vyhodnocení vstupního požadavku",
+    targetProgress: 20,
+    color: "#38bdf8",
+  },
+  {
+    label: "Identifikuji kritické aplikační toky",
+    hint: "Detekce klíčových procesů",
+    targetProgress: 40,
+    color: "#818cf8",
+  },
+  {
+    label: "Navrhuji akceptační testy",
+    hint: "Modelování hlavních průchodů",
+    targetProgress: 60,
+    color: "#a78bfa",
+  },
+  {
+    label: "Mapuji rizika a odchylky",
+    hint: "Analýza chybových stavů",
+    targetProgress: 80,
+    color: "#fb923c",
+  },
+  {
+    label: "Finalizuji QA expertní analýzu",
+    hint: "Kontrola kvality návrhu testů",
+    targetProgress: 100,
+    color: "#4ade80",
+  },
 ];
 
 export default function LoadingOverlay() {
@@ -51,14 +76,6 @@ export default function LoadingOverlay() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md">
-      
-      {/* ===== PARTICLES ===== */}
-      <div className="particles">
-        {Array.from({ length: 40 }).map((_, i) => (
-          <span key={i} />
-        ))}
-      </div>
-
       <div className="flex flex-col items-center gap-10 relative z-10">
 
         {/* ===== WORM LOADER ===== */}
@@ -69,7 +86,14 @@ export default function LoadingOverlay() {
             style={{ animationDuration: `${spinSpeed}s` }}
           >
             <defs>
-              <linearGradient id="wormGradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="120" y2="0">
+              <linearGradient
+                id="wormGradient"
+                gradientUnits="userSpaceOnUse"
+                x1="0"
+                y1="0"
+                x2="120"
+                y2="0"
+              >
                 <stop offset="0%" stopColor={phase.color} />
                 <stop offset="50%" stopColor="#ffffff" />
                 <stop offset="100%" stopColor={phase.color} />
@@ -90,7 +114,7 @@ export default function LoadingOverlay() {
         {/* ===== TEXT ===== */}
         <div className="text-center max-w-sm space-y-2">
           <div className="text-xs uppercase tracking-[0.35em] text-indigo-400">
-            AI PROCESSING
+            ZPRACOVÁNÍ POMOCÍ UMĚLÉ INTELIGENCE
           </div>
 
           <div className="text-sm text-slate-200 glitch">
@@ -102,7 +126,8 @@ export default function LoadingOverlay() {
             {phase.hint}
           </div>
 
-          <div className="mt-4">
+          {/* ===== PROGRESS BAR (CENTERED) ===== */}
+          <div className="mt-4 flex flex-col items-center">
             <div className="h-1.5 w-64 rounded-full bg-slate-800 overflow-hidden">
               <div
                 className="h-full transition-all duration-300"
@@ -118,33 +143,6 @@ export default function LoadingOverlay() {
 
       {/* ================= STYLES ================= */}
       <style>{`
-        /* PARTICLES */
-        .particles {
-          position: absolute;
-          inset: 0;
-          overflow: hidden;
-        }
-
-        .particles span {
-          position: absolute;
-          width: 2px;
-          height: 2px;
-          background: rgba(120,160,255,0.6);
-          border-radius: 50%;
-          animation: float 12s linear infinite;
-          left: calc(100% * var(--x));
-          top: 100%;
-        }
-
-        .particles span:nth-child(odd) { animation-duration: 18s; }
-        .particles span:nth-child(even) { animation-duration: 12s; }
-
-        @keyframes float {
-          from { transform: translateY(0); opacity: 0; }
-          10% { opacity: 1; }
-          to { transform: translateY(-120vh); opacity: 0; }
-        }
-
         /* LOADER */
         .loader-wrap {
           position: relative;
