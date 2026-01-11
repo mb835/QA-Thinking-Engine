@@ -104,17 +104,12 @@ export default function LoadingOverlay() {
             <circle cx="60" cy="60" r="46" className="loader-ghost" />
             <circle cx="60" cy="60" r="46" className="loader-worm" />
           </svg>
-
-          <div
-            className="loader-glow"
-            style={{ background: `radial-gradient(circle, ${phase.color}66, transparent 65%)` }}
-          />
         </div>
 
         {/* ===== TEXT ===== */}
         <div className="text-center max-w-sm space-y-2">
           <div className="text-xs uppercase tracking-[0.35em] text-indigo-400">
-            ZPRACOVÁNÍ POMOCÍ UMĚLÉ INTELIGENCE
+            QA THINKING ENGINE
           </div>
 
           <div className="text-sm text-slate-200 glitch">
@@ -126,7 +121,7 @@ export default function LoadingOverlay() {
             {phase.hint}
           </div>
 
-          {/* ===== PROGRESS BAR (CENTERED) ===== */}
+          {/* ===== PROGRESS BAR ===== */}
           <div className="mt-4 flex flex-col items-center">
             <div className="h-1.5 w-64 rounded-full bg-slate-800 overflow-hidden">
               <div
@@ -143,7 +138,6 @@ export default function LoadingOverlay() {
 
       {/* ================= STYLES ================= */}
       <style>{`
-        /* LOADER */
         .loader-wrap {
           position: relative;
           width: 160px;
@@ -169,7 +163,6 @@ export default function LoadingOverlay() {
           stroke-linecap: round;
           stroke-dasharray: 120 170;
           animation: dashMove 1.1s ease-in-out infinite;
-          filter: drop-shadow(0 0 14px rgba(120,120,255,0.9));
         }
 
         .loader-ghost {
@@ -179,14 +172,6 @@ export default function LoadingOverlay() {
           stroke-linecap: round;
           stroke-dasharray: 60 230;
           animation: dashGhost 1.6s ease-in-out infinite;
-        }
-
-        .loader-glow {
-          position: absolute;
-          inset: 0;
-          border-radius: 50%;
-          filter: blur(28px);
-          animation: glowPulse 3s ease-in-out infinite;
         }
 
         @keyframes spin {
@@ -201,12 +186,6 @@ export default function LoadingOverlay() {
         @keyframes dashGhost {
           0% { stroke-dashoffset: -200; }
           100% { stroke-dashoffset: -480; }
-        }
-
-        @keyframes glowPulse {
-          0% { opacity: 0.3; }
-          50% { opacity: 0.9; }
-          100% { opacity: 0.3; }
         }
 
         /* GLITCH TEXT */
