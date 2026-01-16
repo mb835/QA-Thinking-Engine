@@ -10,7 +10,7 @@ export function resolveTemplate(intent: string): Step[] {
     normalized.includes("nákup") ||
     normalized.includes("notebook")
   ) {
-    return alzaTemplate.steps as Step[];
+    return (alzaTemplate as any).steps as Step[];
   }
 
   throw new Error("No matching template for intent");

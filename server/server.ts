@@ -14,9 +14,9 @@ console.log("👉 JIRA PROJECT KEY:", process.env.JIRA_PROJECT_KEY);
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 
-console.log("🔥 SERVER VERSION: JIRA EXPORT ASYNC + PROGRESS + PARALLEL AI");
+console.log("🔥 SERVER VERSION: JIRA EXPORT ASYNC + PROGRESS + PARALLEL AI + PLAYWRIGHT FIX");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -36,6 +36,15 @@ type ExportJob = {
 };
 
 const exportJobs: Record<string, ExportJob> = {};
+
+/* =========================
+   PLAYWRIGHT STORE
+========================= */
+
+const playwrightStore: Record<
+  string,
+  { filename: string; content: string }
+> = {};
 
 /* =========================
    HEALTH CHECK
@@ -266,6 +275,51 @@ STRUKTURA:
   if (!content) throw new Error("AI nevrátila žádný obsah.");
 
   return JSON.parse(content);
+}
+
+/* =========================
+   PLAYWRIGHT CODE BUILDER (REAL ACTIONS)
+========================= */
+
+function buildPlaywrightTest(testCase: any) {
+  const steps = (testCase.steps || []).map((s: string) => {
+    const t = s.toLowerCase();
+
+    if (t.includes("otevř") || t.includes("open")) {
+      return `  await page.goto('https://www.example.com');`;
+    }
+
+    if (t.includes("vyhled")) {
+      return `  await page.getByRole('textbox').first().fill('notebook');
+  await page.keyboard.press('Enter');`;
+    }
+
+    if (t.includes("přidat") || t.includes("košík")) {
+      return `  await page.getByRole('button').filter({ hasText: /košík|přidat|cart/i }).first().click();`;
+    }
+
+    if (t.includes("dokončit") || t.includes("objednáv")) {
+      return `  await page.getByRole('link').filter({ hasText: /objednáv|checkout|pokračovat/i }).first().click();`;
+    }
+
+    return `  // ${s}
+  await page.waitForTimeout(500);`;
+  }).join("\n\n");
+
+  return `
+import { test, expect } from '@playwright/test';
+
+test('${testCase.title}', async ({ page }) => {
+
+  await page.goto('https://www.example.com');
+  await page.waitForLoadState('networkidle');
+
+${steps}
+
+  await expect(page).toHaveURL(/cart|kosik|checkout/i);
+
+});
+`.trim();
 }
 
 /* =========================
@@ -623,6 +677,102 @@ app.get("/api/integrations/jira/export-status/:id", (req, res) => {
   }
 
   res.json(job);
+});
+
+/* =========================
+   PLAYWRIGHT GENERATE (FIXED)
+========================= */
+
+app.post("/api/run-playwright", async (req, res) => {
+  try {
+    const testCase = req.body?.testCase ?? req.body;
+
+    if (!testCase || !testCase.title) {
+      return res.status(400).json({ error: "Missing or invalid testCase" });
+    }
+
+    const enriched = testCase.steps?.length
+      ? testCase
+      : await generateStepsForTest(testCase);
+
+    const code = buildPlaywrightTest(enriched);
+    const id = randomUUID();
+
+    playwrightStore[id] = {
+      filename: `${enriched.id || "test"}.spec.ts`,
+      content: code,
+    };
+
+    res.json({ id, code });
+  } catch (err) {
+    console.error("❌ Playwright generation failed:", err);
+    res.status(500).json({ error: "Playwright generation failed" });
+  }
+});
+
+/* =========================
+   PLAYWRIGHT DOWNLOAD
+========================= */
+
+app.get("/api/run-playwright/download/:id", (req, res) => {
+  const item = playwrightStore[req.params.id];
+
+  if (!item) {
+    return res.status(404).json({ error: "File not found" });
+  }
+
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=${item.filename}`
+  );
+  res.setHeader("Content-Type", "text/plain");
+  res.send(item.content);
+});
+
+/* =========================
+   PLAYWRIGHT (FRONTEND COMPAT OLD)
+========================= */
+
+app.post("/api/tests/run", async (req, res) => {
+  try {
+    const testCase = req.body?.testCase ?? req.body;
+
+    if (!testCase || !testCase.title) {
+      return res.status(400).json({ error: "Missing or invalid testCase" });
+    }
+
+    const enriched = testCase.steps?.length
+      ? testCase
+      : await generateStepsForTest(testCase);
+
+    const code = buildPlaywrightTest(enriched);
+    const id = randomUUID();
+
+    playwrightStore[id] = {
+      filename: `${enriched.id || "test"}.spec.ts`,
+      content: code,
+    };
+
+    res.json({ id, code });
+  } catch (err) {
+    console.error("❌ Playwright run failed:", err);
+    res.status(500).json({ error: "Playwright run failed" });
+  }
+});
+
+app.get("/api/tests/download/:id", (req, res) => {
+  const item = playwrightStore[req.params.id];
+
+  if (!item) {
+    return res.status(404).json({ error: "File not found" });
+  }
+
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=${item.filename}`
+  );
+  res.setHeader("Content-Type", "text/plain");
+  res.send(item.content);
 });
 
 /* =========================

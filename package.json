@@ -35,5 +35,21 @@
     "tsx": "^4.21.0",
     "typescript": "^5.4.0",
     "vite": "^7.3.0"
-  }
+  },
+  "description": "",
+  "main": "postcss.config.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mb835/qa-ai-agent-v2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mb835/qa-ai-agent-v2/issues"
+  },
+  "homepage": "https://github.com/mb835/qa-ai-agent-v2#readme"
 }

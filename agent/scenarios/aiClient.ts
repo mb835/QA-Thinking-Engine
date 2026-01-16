@@ -1,5 +1,9 @@
-import OpenAI from "openai";
-
-export const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+export const openai = {
+  chat: {
+    completions: {
+      create: async () => {
+        return { choices: [{ message: { content: "stub" } }] };
+      },
+    },
+  },
+};

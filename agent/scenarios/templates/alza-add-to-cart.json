@@ -1,7 +1,21 @@
 {
   "steps": [
-    { "action": "goto", "url": "https://www.alza.cz" },
-    { "action": "fill", "selector": "input[name='SearchText']", "value": "notebook" },
-    { "action": "click", "selector": "button[type='submit']" }
+    {
+      "action": "goto",
+      "url": "https://www.alza.cz"
+    },
+    {
+      "action": "fill",
+      "selector": "input[name='SearchText']",
+      "value": "notebook"
+    },
+    {
+      "action": "click",
+      "selector": "button[type='submit']"
+    },
+    {
+      "action": "expect-url",
+      "urlPart": "notebook"
+    }
   ]
 }
