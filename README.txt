@@ -1,4 +1,4 @@
-QA AI Agent – Progress Bar Upgrade
+QA Thinking Engine
 
 ROZBAL:
 Rozbal do:
