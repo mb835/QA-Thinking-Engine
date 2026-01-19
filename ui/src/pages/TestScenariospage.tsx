@@ -114,7 +114,11 @@ export default function TestScenariosPage() {
   const [loading, setLoading] = useState(false);
   const [loadingStepsId, setLoadingStepsId] = useState<string | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(false);
-  const [pwLoadingId, setPwLoadingId] = useState<string | null>(null);
+  
+  // Stavy pro "Button Feedback" (místo alertů)
+  const [pwSuccessId, setPwSuccessId] = useState<string | null>(null);
+  const [downloadSuccessId, setDownloadSuccessId] = useState<string | null>(null); // NOVÝ STAV
+  const [jiraSuccessId, setJiraSuccessId] = useState<string | null>(null);
 
   const [scenarioExportLoading, setScenarioExportLoading] = useState(false);
   const [scenarioJiraResult, setScenarioJiraResult] = useState<ScenarioJiraResult | null>(null);
@@ -126,15 +130,15 @@ export default function TestScenariosPage() {
 
   const { displayedText, currentFullText, isPaused } = useTypewriter([
     "Jako neregistrovaný uživatel vyhledej 'herní notebook', vyfiltruj pouze značku ASUS s cenou nad 30 000 Kč, přidej ho do košíku, v košíku přidej ještě pojištění proti rozbití, uplatni slevový kód 'SLEVA2024' a dokonči objednávku s doručením na pobočku...",
-    "Jako uživatel chci mít možnost resetovat heslo pomocí e-mailového odkazu s platností 30 minut...",
-    "Ověř zabezpečení přihlašovacího formuláře proti útokům hrubou silou (Brute Force) a SQL Injection...",
-    "Zkontroluj validaci formuláře pro zadání IBAN a SWIFT kódu při zahraniční platbě...",
-    "Otestuj hraniční případ: Přidej do košíku 999 kusů produktu a ověř výpočet ceny dopravy...",
-    "Jako uživatel s rolí 'Editor' se pokus smazat účet 'Administrátora' (očekáváno zamítnutí přístupu)...",
-    "Ověř responzivitu a funkčnost checkout procesu na mobilním zařízení (viewport iPhone 14 Pro)...",
-    "Otestuj API endpoint /api/v1/orders: Odošli POST request s neplatným autentizačním tokenem...",
-    "Zkontroluj chování aplikace při výpadku internetového připojení během odesílání formuláře...",
-    "Ověř lokalizaci: Přepni aplikaci do němčiny a zkontroluj formátování měny a data..."
+    "Jako uživatel chci mít možnost resetovat heslo pomocí e-mailového odkazu...",
+    "Ověř zabezpečení API endpointu /login proti SQL Injection a Brute Force útokům...",
+    "Zkontroluj validaci registračního formuláře při zadání neplatných dat (špatný formát e-mailu, krátké heslo)...",
+    "Otestuj chování košíku při přidání 999 kusů produktu a následném odebrání...",
+    "Ověř, že uživatel s rolí 'Editor' nemá přístup do sekce 'Nastavení uživatelů'...",
+    "Zkontroluj, zda se správně načítají data v offline režimu u mobilní aplikace...",
+    "Proveď vizuální testy responzivity stránky na rozlišení iPhone 14 Pro a iPad Air...",
+    "Otestuj platební bránu: Zamítnutá platba kartou z důvodu nedostatku prostředků...",
+    "Ověř funkčnost filtrování produktů podle parametrů (barva, velikost, materiál)..."
   ], 15, 4000); 
 
   const isScenarioExportRunning = scenarioExportLoading || exportStatus?.status === "running";
@@ -163,7 +167,7 @@ export default function TestScenariosPage() {
       setExportJobId(null);
     } catch (e) {
       console.error(e);
-      alert("❌ Chyba při generování scénáře");
+      // Pro video alerty nechceme, chyba se vypíše do konzole
     } finally {
       setLoading(false);
     }
@@ -187,7 +191,6 @@ export default function TestScenariosPage() {
       setActiveTestCase((prev: any) => ({ ...prev, ...data }));
     } catch (e) {
       console.error(e);
-      alert("❌ Chyba při generování kroků");
     } finally {
       setLoadingStepsId(null);
     }
@@ -210,29 +213,30 @@ export default function TestScenariosPage() {
       setActiveTestCase((prev: any) => ({ ...prev, qaInsight: data.qaInsight }));
     } catch (e) {
       console.error(e);
-      alert("❌ Chyba při generování Expertní QA analýzy");
     } finally {
       setLoadingInsight(false);
     }
   }
 
+  // --- BEZ ALERTU, MÍSTO TOHO ZMĚNA TLAČÍTKA ---
   async function handleRunPlaywright(tc: any) {
     try {
-      setPwLoadingId(tc.id);
-      await runPlaywright(tc);
-      alert("✅ Playwright test byl vygenerován");
+      await runPlaywright(tc); 
+      setPwSuccessId(tc.id);
+      setTimeout(() => setPwSuccessId(null), 2500); 
     } catch (e) {
       console.error(e);
-      alert("❌ Chyba při generování Playwright testu");
-    } finally {
-      setPwLoadingId(null);
     }
   }
 
   function handleDownloadSpec(tc: any) {
     downloadPlaywrightSpec(tc);
+    // Vizuální feedback pro video
+    setDownloadSuccessId(tc.id);
+    setTimeout(() => setDownloadSuccessId(null), 2000);
   }
 
+  // --- BEZ ALERTU, MÍSTO TOHO ZMĚNA TLAČÍTKA ---
   async function handleExportSingleTestCase(tc: any) {
     if (blockSingleExport) return;
     try {
@@ -242,9 +246,10 @@ export default function TestScenariosPage() {
         ...prev,
         [tc.id]: { key: result.issueKey, url: result.issueUrl },
       }));
+      setJiraSuccessId(tc.id);
+      setTimeout(() => setJiraSuccessId(null), 3000);
     } catch (e) {
       console.error(e);
-      alert("❌ Chyba při exportu test case do JIRA");
     }
   }
 
@@ -263,7 +268,6 @@ export default function TestScenariosPage() {
       setExportJobId(data.jobId);
     } catch (e) {
       console.error(e);
-      alert("❌ Chyba při spuštění exportu scénáře do JIRA");
       setScenarioExportLoading(false);
     }
   }
@@ -281,7 +285,7 @@ export default function TestScenariosPage() {
           clearInterval(interval);
         }
         if (data.status === "error") {
-          alert("❌ Export do JIRA selhal – zkontroluj backend log");
+          console.error("Export failed");
           setScenarioExportLoading(false);
           clearInterval(interval);
         }
@@ -386,7 +390,6 @@ export default function TestScenariosPage() {
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 text-left">
             {/* LEFT */}
             <div className="rounded-xl bg-slate-900 border border-slate-800 p-6">
-              {/* HEADER ROW - FLEXBOX FIX */}
               <div className="flex justify-between items-start mb-4">
                 <div>
                   {!isAcceptance && (
@@ -485,27 +488,46 @@ export default function TestScenariosPage() {
                 <button
                   disabled={!hasSteps}
                   onClick={() => handleDownloadSpec(activeTestCase)}
-                  className={`px-4 py-2 rounded-lg text-white ${
-                    hasSteps
+                  className={`px-4 py-2 rounded-lg text-white transition-all ${
+                    downloadSuccessId === activeTestCase.id
+                      ? "bg-emerald-600 hover:bg-emerald-700 scale-105"
+                      : hasSteps
                       ? "bg-indigo-600 hover:bg-indigo-700"
                       : "bg-slate-700 cursor-not-allowed"
                   }`}
                 >
-                  <FaDownload className="inline mr-2" />
-                  Stáhnout Playwright test
+                  {downloadSuccessId === activeTestCase.id ? (
+                      <>
+                        <FaCheckCircle className="inline mr-2" />
+                        Staženo
+                      </>
+                  ) : (
+                      <>
+                        <FaDownload className="inline mr-2" />
+                        Stáhnout Playwright test
+                      </>
+                  )}
                 </button>
 
                 <button
                   disabled={blockSingleExport}
                   onClick={() => handleExportSingleTestCase(activeTestCase)}
-                  className={`px-4 py-2 rounded-lg text-white ${
-                    blockSingleExport
+                  className={`px-4 py-2 rounded-lg text-white transition-all ${
+                    jiraSuccessId === activeTestCase.id
+                      ? "bg-emerald-600 hover:bg-emerald-700 scale-105"
+                      : blockSingleExport
                       ? "bg-slate-700 cursor-not-allowed"
                       : "bg-amber-600 hover:bg-amber-700"
                   }`}
                 >
-                  <FaJira className="inline mr-2" />
-                  Exportuj do JIRA
+                  {jiraSuccessId === activeTestCase.id ? (
+                      <>✅ Exportováno</>
+                  ) : (
+                      <>
+                        <FaJira className="inline mr-2" />
+                        Export do JIRA
+                      </>
+                  )}
                 </button>
               </div>
 

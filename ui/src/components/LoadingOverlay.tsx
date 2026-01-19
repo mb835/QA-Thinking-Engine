@@ -21,7 +21,7 @@ const PHASES: Phase[] = [
     color: "#818cf8", // Indigo
   },
   {
-    label: "Navrhuji akceptační testy",
+    label: "Navrhuji akceptační test",
     hint: "Modelování hlavních průchodů",
     targetProgress: 60,
     color: "#a78bfa", // Violet
