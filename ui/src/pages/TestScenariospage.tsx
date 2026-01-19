@@ -131,7 +131,7 @@ export default function TestScenariosPage() {
   const { displayedText, currentFullText, isPaused } = useTypewriter([
     "Jako neregistrovaný uživatel vyhledej 'herní notebook', vyfiltruj pouze značku ASUS s cenou nad 30 000 Kč, přidej ho do košíku, v košíku přidej ještě pojištění proti rozbití, uplatni slevový kód 'SLEVA2024' a dokonči objednávku s doručením na pobočku...",
     "Jako uživatel chci mít možnost resetovat heslo pomocí e-mailového odkazu...",
-    "Ověř zabezpečení API endpointu /login proti SQL Injection a Brute Force útokům...",
+    "Ověř zabezpečení API endpointu / login proti SQL Injection a Brute Force útokům...",
     "Zkontroluj validaci registračního formuláře při zadání neplatných dat (špatný formát e-mailu, krátké heslo)...",
     "Otestuj chování košíku při přidání 999 kusů produktu a následném odebrání...",
     "Ověř, že uživatel s rolí 'Editor' nemá přístup do sekce 'Nastavení uživatelů'...",
