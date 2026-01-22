@@ -15,7 +15,7 @@ import {
   FaJira,
   FaExternalLinkAlt,
   FaTerminal,
-  FaRedo,
+  FaRedo, // Důležité pro tlačítko "Nový test"
   FaArrowRight
 } from "react-icons/fa";
 
@@ -107,17 +107,52 @@ function getTestTypeStyle(type: string) {
 }
 
 export default function TestScenariosPage() {
-  const [intent, setIntent] = useState("");
-  const [scenario, setScenario] = useState<any>(null);
-  const [activeTestCase, setActiveTestCase] = useState<any>(null);
+  
+  // --- STATE S PERSISTENCÍ (Načítání z localStorage) ---
+  const [intent, setIntent] = useState(() => {
+    if (typeof window !== "undefined") {
+        return localStorage.getItem("qa_intent") || "";
+    }
+    return "";
+  });
+
+  const [scenario, setScenario] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("qa_scenario");
+        return saved ? JSON.parse(saved) : null;
+    }
+    return null;
+  });
+
+  const [activeTestCase, setActiveTestCase] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("qa_scenario");
+        return saved ? JSON.parse(saved) : null;
+    }
+    return null;
+  });
+
+  // --- EFEKTY PRO UKLÁDÁNÍ ---
+  useEffect(() => {
+    localStorage.setItem("qa_intent", intent);
+  }, [intent]);
+
+  useEffect(() => {
+    if (scenario) {
+      localStorage.setItem("qa_scenario", JSON.stringify(scenario));
+    } else {
+        localStorage.removeItem("qa_scenario");
+    }
+  }, [scenario]);
+
 
   const [loading, setLoading] = useState(false);
   const [loadingStepsId, setLoadingStepsId] = useState<string | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(false);
   
-  // Stavy pro "Button Feedback" (místo alertů)
+  // Stavy pro "Button Feedback"
   const [pwSuccessId, setPwSuccessId] = useState<string | null>(null);
-  const [downloadSuccessId, setDownloadSuccessId] = useState<string | null>(null); // NOVÝ STAV
+  const [downloadSuccessId, setDownloadSuccessId] = useState<string | null>(null);
   const [jiraSuccessId, setJiraSuccessId] = useState<string | null>(null);
 
   const [scenarioExportLoading, setScenarioExportLoading] = useState(false);
@@ -164,10 +199,19 @@ export default function TestScenariosPage() {
       setExportJobId(null);
     } catch (e) {
       console.error(e);
-      // Pro video alerty nechceme, chyba se vypíše do konzole
     } finally {
       setLoading(false);
     }
+  }
+
+  // --- FUNKCE PRO RESET (NOVÝ TEST) ---
+  function handleClearAll() {
+    setIntent("");
+    setScenario(null);
+    setActiveTestCase(null);
+    setScenarioJiraResult(null);
+    localStorage.removeItem("qa_intent");
+    localStorage.removeItem("qa_scenario");
   }
 
   function handleUseExample() {
@@ -215,7 +259,6 @@ export default function TestScenariosPage() {
     }
   }
 
-  // --- BEZ ALERTU, MÍSTO TOHO ZMĚNA TLAČÍTKA ---
   async function handleRunPlaywright(tc: any) {
     try {
       await runPlaywright(tc); 
@@ -228,12 +271,10 @@ export default function TestScenariosPage() {
 
   function handleDownloadSpec(tc: any) {
     downloadPlaywrightSpec(tc);
-    // Vizuální feedback pro video
     setDownloadSuccessId(tc.id);
     setTimeout(() => setDownloadSuccessId(null), 2000);
   }
 
-  // --- BEZ ALERTU, MÍSTO TOHO ZMĚNA TLAČÍTKA ---
   async function handleExportSingleTestCase(tc: any) {
     if (blockSingleExport) return;
     try {
@@ -317,9 +358,20 @@ export default function TestScenariosPage() {
 
         {/* INPUT */}
         <div>
-          <label className="block text-sm text-slate-300 mb-2 text-left">
-            Testovací záměr
-          </label>
+          {/* Label + Reset Button */}
+          <div className="flex justify-between items-end mb-2">
+            <label className="block text-sm text-slate-300 text-left">
+                Testovací záměr
+            </label>
+            {(intent || scenario) && (
+                <button 
+                onClick={handleClearAll}
+                className="text-xs text-slate-500 hover:text-red-400 transition-colors flex items-center gap-1"
+                >
+                <FaRedo className="text-[10px]" /> Nový test (Vyčistit)
+                </button>
+            )}
+          </div>
 
           <div className="neon-wrap relative group">
             <textarea
@@ -606,24 +658,35 @@ export default function TestScenariosPage() {
                     </section>
                   )}
 
+                  {/* --- RIZIKA (Clean Native Style - FINÁLNÍ DESIGN) --- */}
                   {activeTestCase.qaInsight.risks?.length > 0 && (
-                    <section>
-                        <h4 className="flex items-center gap-2 font-semibold mb-1 text-white">
-                        <FaExclamationTriangle className="text-amber-400" />
-                        Rizika
+                    <section className="mt-6">
+                        <h4 className="flex items-center gap-2 font-semibold mb-2 text-red-400">
+                           <FaExclamationTriangle />
+                           Rizika
                         </h4>
-                        <ul className="list-disc list-inside text-slate-300">
-                        {activeTestCase.qaInsight.risks.map(
-                            (r: string, i: number) => (
-                            <li key={i}>{r}</li>
-                            )
-                        )}
-                        </ul>
+                        
+                        <div className="space-y-2">
+                            {activeTestCase.qaInsight.risks.map((r: string, i: number) => (
+                            <div key={i} className="flex items-start gap-3">
+                                
+                                {/* CSS Terč (decentní, bez importu) */}
+                                <span className="mt-[5px] flex-shrink-0 flex items-center justify-center h-3 w-3 rounded-full border border-red-500/60">
+                                    <span className="h-1 w-1 rounded-full bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.6)]"></span>
+                                </span>
+                                
+                                {/* Text rizika - červený, ale čistý bez pozadí */}
+                                <span className="text-sm text-red-200/90 leading-relaxed">
+                                   {r.replace("⚠️", "").trim()}
+                                </span>
+                            </div>
+                            ))}
+                        </div>
                     </section>
                   )}
 
                   {activeTestCase.qaInsight.automationTips?.length > 0 && (
-                    <section>
+                    <section className="mt-6">
                         <h4 className="flex items-center gap-2 font-semibold mb-1 text-white">
                         <FaRobot className="text-indigo-400" />
                         Doporučení pro Playwright
