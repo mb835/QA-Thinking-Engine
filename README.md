@@ -230,15 +230,10 @@ The engine acts as a "second pair of eyes," analyzing coverage and risks.
 
 
 * 🚀 **Accelerates Test Design:** Reduces planning time by ~80%. Instantly creates comprehensive test plans from a single sentence.
-
 * ⚖️ **Uncovers Hidden Risks:** Identifies edge cases and security vulnerabilities (e.g., SQL Injection) that humans might overlook.
-
 * 🤖 **Instant Automation:** Immediately converts textual test steps into syntactically correct **Playwright (TypeScript)** code.
-
 * 🇨🇿 **Localized Output:** The engine is **optimized for Czech language output** by default (configurable via prompt settings), ensuring consistent documentation.
-
 * 🛡️ **AI Guardrails:** Implements heuristic validators to minimize hallucinations and ensure the generated steps are logically sequential.
-
 * 🎫 **Seamless JIRA Integration:** (Experimental) Prototype feature for exporting scenarios directly to JIRA as Epics/Tasks.
 
 
