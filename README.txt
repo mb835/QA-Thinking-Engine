@@ -176,13 +176,24 @@ npm run dev
 
 ---
 
-## 🔮 Roadmap
+## 🔮 Roadmap & Future Vision
 
-* [x] **QA Design Engine** (Core Logic)
-* [x] **Playwright Export** (Code Gen)
-* [ ] **CI/CD Pipeline** (GitHub Actions integration)
-* [x] **JIRA Integration** (Prototype phase)
-* [ ] **Strategy Profiles** (Switch between "Aggressive" vs "Standard" testing depth)
+### ✅ Phase 1: Foundation (Implemented)
+* [x] **QA Design Engine:** Core Logic & AI Agent for requirement interpretation.
+* [x] **Playwright Export:** Automated TypeScript code generation for end-to-end testing.
+* [x] **JIRA Integration:** Seamless bridge between AI design and project management.
+
+### 🚀 Phase 2: Intelligence & Stability (Planned)
+* [ ] **Contextual Awareness:** Integration with Confluence/Documentation to align tests with specific business logic.
+* [ ] **Self-Healing Scripts:** AI-driven updates for Playwright locators when the UI changes.
+* [ ] **Persistent Storage:** MongoDB integration for saving test history, versions, and user preferences.
+* [ ] **Risk-Based Heatmaps:** Visual analytics to identify the most vulnerable parts of the application.
+
+### 🛠️ Phase 3: Scaling & Automation (Planned)
+* [ ] **CI/CD Pipeline:** GitHub Actions integration for automated test execution on every commit.
+* [ ] **Synthetic Data Generation:** AI-powered creation of safe, anonymized test data to ensure privacy compliance.
+* [ ] **Cloud Testing:** Integration with SauceLabs/BrowserStack for cross-browser and mobile validation.
+* [ ] **Visual Testing:** Pixel-perfect regression checks using AI computer vision.
 
 ---
 
