@@ -247,18 +247,12 @@ The engine acts as a "second pair of eyes," analyzing coverage and risks.
 
 ## 🛠️ Tech Stack
 
-
-![React](https://img.shields.io/…FB)
-
-![TypeScript](https://img.shields.io/…te)
-
-![NodeJS](https://img.shields.io/…te)
-
-![TailwindCSS](https://img.shields.io/…te)
-
-![OpenAI](https://img.shields.io/…te)
-
-![Playwright](https://img.shields.io/…te)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![NodeJS](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)
 
 
 ---
