@@ -136,11 +136,14 @@ The engine acts as a "second pair of eyes," analyzing coverage and risks.
 ## ⚙️ Core Capabilities
 
 * 🚀 **Accelerates Test Design:** Reduces planning time by ~80%. Instantly creates comprehensive test plans from a single sentence.
+* 🎯 **Complex Flow Fidelity:** Capable of handling extensive test scenarios (e.g., 20+ steps) with strict adherence to Acceptance Criteria, ensuring no action is skipped or simplified.
 * ⚖️ **Uncovers Hidden Risks:** Identifies edge cases and security vulnerabilities (e.g., SQL Injection) that humans might overlook.
 * 🤖 **Instant Automation:** Immediately converts textual test steps into syntactically correct **Playwright (TypeScript)** code.
-* 🇨🇿 **Localized Output:** The engine is **optimized for Czech language output** by default (configurable via prompt settings), ensuring consistent documentation.
 * 🛡️ **AI Guardrails:** Implements heuristic validators to minimize hallucinations and ensure the generated steps are logically sequential.
+* 🇨🇿 **Localized Output:** The engine is **optimized for Czech language output** by default (configurable via prompt settings), ensuring consistent documentation.
 * 🎫 **Seamless JIRA Integration:** (Experimental) Prototype feature for exporting scenarios directly to JIRA as Epics/Tasks.
+
+
 
 ---
 
