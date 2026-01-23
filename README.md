@@ -192,10 +192,12 @@ Return to the root directory, create a `.env` file and update it with your crede
 OPENAI_API_KEY=sk-proj-xxxxxxxx...
 
 # --- JIRA Integration (Optional) ---
-JIRA_BASE_URL=[https://your-domain.atlassian.net](https://your-domain.atlassian.net)
+JIRA_BASE_URL=https://your-domain.atlassian.net
 JIRA_EMAIL=your-email@example.com
-JIRA_API_TOKEN=ATATT3xFfGF0...    # Generate at: [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+JIRA_API_TOKEN=ATATT3xFfGF0...
 JIRA_PROJECT_KEY=KAN
+# Generate at: https://id.atlassian.com/manage-profile/security/api-tokens
+
 ```
 
 ### 3. Run the Application
