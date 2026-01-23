@@ -144,6 +144,7 @@ The engine acts as a "second pair of eyes," analyzing coverage and risks.
 * 🌐 **Localized Output:** The engine is **optimized for Czech language output** by default (configurable via prompt settings), ensuring consistent documentation.
 * 🎫 **Seamless JIRA Integration:** (Experimental) Prototype feature for exporting scenarios directly to JIRA as Epics/Tasks.
 
+
 ---
 
 ## 🛠️ Tech Stack
