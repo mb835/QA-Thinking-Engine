@@ -136,7 +136,7 @@ graph TD
 *The final output: A structured Acceptance test with distinct steps, preconditions, and a dedicated "Expert QA Insight" panel.*
 
 
-![Detail View](./docs/TCDetail01.png)
+![Detail View](./docs/TCD01.png)
 
 
 ### 5. 🛠️ Automated Playwright Code
