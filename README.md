@@ -137,7 +137,7 @@ The engine acts as a "second pair of eyes," analyzing coverage and risks.
 
 ## ⚙️ Core Capabilities
 
-* 🚀 **Accelerated Test Design & Automation:** From intent to structured scenarios and Playwright skeletons in seconds.
+* 🚀 **Accelerated Test Design & Automation:** From intent to Playwright skeletons in seconds.
 * 🎯 **Complex Flow Fidelity:** Handles large scenarios (20+ steps) with strict adherence to Acceptance Criteria.
 * ⚖️ **Risk Awareness:** Systematically highlights functional, security, and abuse risks.
 * 🛡️ **AI Guardrails:** Heuristic validators to minimize hallucinations and enforce logical step order.
