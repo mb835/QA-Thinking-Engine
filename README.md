@@ -137,14 +137,12 @@ The engine acts as a "second pair of eyes," analyzing coverage and risks.
 
 ## ⚙️ Core Capabilities
 
-* 🚀 **Accelerated Test Design & Automation:** Converts a single intent into structured test scenarios and production-ready Playwright skeletons in seconds.
-* 🎯 **Complex Flow Fidelity:** Capable of handling extensive test scenarios (e.g., 20+ steps) with strict adherence to Acceptance Criteria, ensuring no action is skipped or simplified.
+* 🚀 **Accelerated Test Design & Automation:** From intent to structured scenarios and Playwright skeletons in seconds.
+* 🎯 **Complex Flow Fidelity:** Handles large scenarios (20+ steps) with strict adherence to Acceptance Criteria.
 * ⚖️ **Risk Awareness:** Systematically highlights functional, security, and abuse risks.
 * 🛡️ **AI Guardrails:** Implements heuristic validators to minimize hallucinations and ensure the generated steps are logically sequential.
 * 🌐 **Localized Output:** The engine is **optimized for Czech language output** by default (configurable via prompt settings), ensuring consistent documentation.
 * 🎫 **Seamless JIRA Integration:** (Experimental) Prototype feature for exporting scenarios directly to JIRA as Epics/Tasks.
-
-
 
 ---
 
