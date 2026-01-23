@@ -140,7 +140,7 @@ The engine acts as a "second pair of eyes," analyzing coverage and risks.
 * ⚖️ **Uncovers Hidden Risks:** Identifies edge cases and security vulnerabilities (e.g., SQL Injection) that humans might overlook.
 * 🤖 **Instant Automation:** Immediately converts textual test steps into syntactically correct **Playwright (TypeScript)** code.
 * 🛡️ **AI Guardrails:** Implements heuristic validators to minimize hallucinations and ensure the generated steps are logically sequential.
-* 🇨🇿 **Localized Output:** The engine is **optimized for Czech language output** by default (configurable via prompt settings), ensuring consistent documentation.
+* 🌐 **Localized Output:** The engine is **optimized for Czech language output** by default (configurable via prompt settings), ensuring consistent documentation.
 * 🎫 **Seamless JIRA Integration:** (Experimental) Prototype feature for exporting scenarios directly to JIRA as Epics/Tasks.
 
 
