@@ -234,7 +234,7 @@ npm run dev
 * [x] **JIRA Integration:** Seamless bridge between AI design and project management.
 
 ### 🚀 Phase 2: Intelligence & Stability (Planned)
-* [ ] **QA Strategy Profiles:** Configurable analysis modes controlling depth, coverage, and test granularity (e.g., *Balanced* vs *Deep Analysis*).
+* [ ] **Analysis Profiles:** Configurable analysis modes controlling depth, coverage, and test granularity (e.g., *Balanced* vs *Deep Analysis*).
 * [ ] **Privacy-First Masking:** Automatic masking of sensitive data before AI processing.
 * [ ] **Contextual Awareness:** Integration with Confluence/Documentation to align tests with specific business logic.
 * [ ] **Self-Healing Scripts:** AI-driven updates for Playwright locators when the UI changes.
