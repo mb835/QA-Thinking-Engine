@@ -217,7 +217,12 @@ cd ui
 npm run dev
 # App starts on http://localhost:5173
 ```
+## 🛑 What this is NOT
+To ensure realistic expectations, it is important to clarify the scope of this project:
 
+* **Not a replacement for QA Engineers:** It assists in critical thinking and strategy design but does not replace human judgment.
+* **Not a full Test Runner:** It generates code structure, but execution and maintenance happen in your standard CI/CD environment.
+* **Not a "Magic Box":** The quality of the output depends on the clarity of the input intent (Garbage In, Garbage Out).
 ---
 
 ## 🔮 Roadmap & Future Vision
