@@ -219,12 +219,10 @@ npm run dev
 ```
 ## 🚫 What This Is NOT
 
-To ensure realistic expectations, it is important to clearly define the scope of this project:
-
-- **Not a replacement for QA engineers:** It supports analytical thinking and structured test design, but human judgment remains essential.
-- **Not a test execution or runner platform:** It generates Playwright ready automation skeletons, while execution and maintenance remain in standard CI/CD tooling.
-- **Not a magic box:** Output quality depends on the clarity and quality of the provided test intent (garbage in, garbage out).
-- **Not a generic AI chatbot or script generator:** Outputs follow a structured, risk driven approach rather than ad hoc text generation.
+- Not a replacement for QA engineers or human judgment.
+- Not a test execution or automation runner platform.
+- Not a magic box – output quality depends on input quality.
+- Not a generic AI chatbot or random script generator.
 
 ---
 
