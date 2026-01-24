@@ -4,7 +4,7 @@
 
 **Structured QA analysis and Playwright skeleton generation**
 
-> **Transforming test intent into structured, risk-driven test scenarios and automation-ready outputs**
+> **From test intent → structured scenarios → Playwright-ready skeletons**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![Status](https://img.shields.io/badge/status-PoC_(Proof_of_Concept)-orange.svg)
