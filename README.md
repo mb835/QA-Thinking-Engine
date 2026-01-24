@@ -217,12 +217,15 @@ cd ui
 npm run dev
 # App starts on http://localhost:5173
 ```
-## 🛑 What this is NOT
-To ensure realistic expectations, it is important to clarify the scope of this project:
+## 🚫 What This Is NOT
 
-* **Not a replacement for QA Engineers:** It assists in critical thinking and strategy design but does not replace human judgment.
-* **Not a full Test Runner:** It generates code structure, but execution and maintenance happen in your standard CI/CD environment.
-* **Not a "Magic Box":** The quality of the output depends on the clarity of the input intent (Garbage In, Garbage Out).
+To ensure realistic expectations, it is important to clearly define the scope of this project:
+
+- **Not a replacement for QA engineers:** It supports analytical thinking and structured test design, but human judgment remains essential.
+- **Not a test execution or runner platform:** It generates Playwright ready automation skeletons, while execution and maintenance remain in standard CI/CD tooling.
+- **Not a magic box:** Output quality depends on the clarity and quality of the provided test intent (garbage in, garbage out).
+- **Not a generic AI chatbot or script generator:** Outputs follow a structured, risk driven approach rather than ad hoc text generation.
+
 ---
 
 ## 🔮 Roadmap & Future Vision
