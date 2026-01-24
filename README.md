@@ -2,9 +2,9 @@
 
 **AI-Powered Quality Intelligence**
 
-**Intelligent Tool for Risk-Driven Test Design & Playwright Automation**
+**Risk Analysis & Test Design Engine**
 
-> **From vague intent to Playwright test in 30 seconds.**
+> **Transforming test intent into structured risk driven test design and Playwright ready outputs**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![Status](https://img.shields.io/badge/status-PoC_(Proof_of_Concept)-orange.svg)
