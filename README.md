@@ -252,3 +252,10 @@ npm run dev
 **Martin Bělov**
 * QA Tester | Test Design | API, SQL | AI-Assisted Development
 * *This project demonstrates the intersection of QA methodology, AI Engineering, and Software Development.*
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.  
+See the [LICENSE](LICENSE) file for details.
