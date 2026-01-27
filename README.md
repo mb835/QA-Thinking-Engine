@@ -1,6 +1,6 @@
 # 🚀 QA Thinking Engine ⚡ 
 
-**AI-assisted Risk-Based Test Design Tool**
+**AI assisted Risk Based Test Design Tool**
 
 > **From test intent → structured scenarios → Playwright-ready skeletons**
 
