@@ -150,7 +150,7 @@ The engine acts as a "second pair of eyes," analyzing coverage and risks.
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
@@ -261,7 +261,7 @@ npm run dev
 
 ---
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License.  
 See the [LICENSE](LICENSE) file for details.
