@@ -1,4 +1,4 @@
-# 🚀 QA Thinking Engine ⚡ 
+#  QA Thinking Engine ⚡ 
 
 **AI Risk Based Test Design Tool**
 
@@ -10,7 +10,7 @@
 
 ---
 
-## 🧠 About the Project
+##  About the Project
 
 **QA Thinking Engine** solves the "blank page" problem in software testing. It combines the power of **OpenAI (GPT-4)** with structured QA engineering principles.
 
@@ -18,7 +18,7 @@ Instead of hours spent on manual writing, you provide a test intent, and the eng
 
 ---
 
-## ⚡ Why This Matters?
+##  Why This Matters?
 
 Business and development teams often struggle with the "QA bottleneck." Here is how **QA Thinking Engine** compares to the traditional approach:
 
@@ -31,7 +31,7 @@ Business and development teams often struggle with the "QA bottleneck." Here is 
 
 ---
 
-## 🛡️ Security-First Approach: Expert QA Insight
+##  Security-First Approach: Expert QA Insight
 
 The engine incorporates security and validation awareness inspired by common OWASP Top 10 risk areas.
 
@@ -47,7 +47,7 @@ In addition, each generated test includes a clear business and risk rationale ex
 
 ---
 
-## 🏗️ High-Level Architecture
+##  High-Level Architecture
 
 The application follows a clean separation of concerns, ensuring modularity between the UI, the logical engine, and the AI integration.
 
@@ -96,7 +96,7 @@ graph TD
 
 ---
 
-## 📦 Output Structure
+##  Output Structure
 
 Unlike generic chat bots, this engine enforces **strict structured outputs** suitable for professional QA workflows.
 
@@ -132,21 +132,21 @@ Generates actionable steps for manual or automated execution.
 ### 3️⃣ Expert QA Insight
 The engine acts as a "second pair of eyes," analyzing coverage and risks.
 
-* **🎯 Strategic Rationale:** Explains the business context and why this specific test is critical for the product.
-* **📊 Coverage:** Validates if the test covers "Acceptance flows" or "Negative scenarios".
-* **🛡️ Risks:** Identifies edge cases (e.g., SQL Injection, Brute Force).
-* **🤖 Automation Tips:** Suggests locators (e.g., `data-testid`) for stability.
+* ** Strategic Rationale:** Explains the business context and why this specific test is critical for the product.
+* ** Coverage:** Validates if the test covers "Acceptance flows" or "Negative scenarios".
+* ** Risks:** Identifies edge cases (e.g., SQL Injection, Brute Force).
+* ** Automation Tips:** Suggests locators (e.g., `data-testid`) for stability.
 
 ---
 
 ## ⚙️ Core Capabilities
 
-* 🚀 **Accelerated Test Design & Automation:** From intent to Playwright skeletons in seconds.
-* 🎯 **Complex Flow Fidelity:** Handles large scenarios (20+ steps) with strict adherence to Acceptance Criteria.
-* ⚖️ **Risk Awareness:** Systematically highlights functional, security, and abuse risks.
-* 🛡️ **AI Guardrails:** Heuristic validators to minimize hallucinations and enforce logical step order.
-* 🌐 **Localized Output:** Optimized for Czech output by default (configurable via prompt settings).
-* 🎫 **Seamless JIRA Integration:** Experimental export of scenarios directly to JIRA (Epics / Tasks).
+*  **Accelerated Test Design & Automation:** From intent to Playwright skeletons in seconds.
+*  **Complex Flow Fidelity:** Handles large scenarios (20+ steps) with strict adherence to Acceptance Criteria.
+*  **Risk Awareness:** Systematically highlights functional, security, and abuse risks.
+*  **AI Guardrails:** Heuristic validators to minimize hallucinations and enforce logical step order.
+*  **Localized Output:** Optimized for Czech output by default (configurable via prompt settings).
+*  **Seamless JIRA Integration:** Experimental export of scenarios directly to JIRA (Epics / Tasks).
 
 ---
 
@@ -161,7 +161,7 @@ The engine acts as a "second pair of eyes," analyzing coverage and risks.
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 * Node.js (v18+)
