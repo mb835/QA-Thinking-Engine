@@ -41,7 +41,7 @@ During scenario analysis, it highlights potential gaps or missing validation rel
 - Cross-Site Scripting (XSS)
 - Authentication and authorization risks
 
-This helps testers systematically consider security and abuse risks already during test design — not only during later security testing phases.
+This helps testers systematically consider security and abuse risks early in the test design phase, rather than only during later security testing stages.
 
 In addition, each generated test includes a clear business and risk rationale explaining *why* the test is important for product stability and quality.
 
