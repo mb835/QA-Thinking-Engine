@@ -132,10 +132,10 @@ Generates actionable steps for manual or automated execution.
 ### 3️⃣ Expert QA Insight
 The engine acts as a "second pair of eyes," analyzing coverage and risks.
 
-* ** Strategic Rationale:** Explains the business context and why this specific test is critical for the product.
-* ** Coverage:** Validates if the test covers "Acceptance flows" or "Negative scenarios".
-* ** Risks:** Identifies edge cases (e.g., SQL Injection, Brute Force).
-* ** Automation Tips:** Suggests locators (e.g., `data-testid`) for stability.
+* **Strategic Rationale:** Explains the business context and why this specific test is critical for the product.
+* **Coverage:** Validates if the test covers "Acceptance flows" or "Negative scenarios".
+* **Risks:** Identifies edge cases (e.g., SQL Injection, Brute Force).
+* **Automation Tips:** Suggests locators (e.g., `data-testid`) for stability.
 
 ---
 
