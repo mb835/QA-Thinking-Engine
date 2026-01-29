@@ -10,7 +10,7 @@
 
 ---
 
-##  About the Project
+## 🧠 About the Project
 
 **QA Thinking Engine** solves the "blank page" problem in software testing. It combines the power of **OpenAI (GPT-4)** with structured QA engineering principles.
 
