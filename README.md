@@ -31,7 +31,7 @@ Business and development teams often struggle with the "QA bottleneck." Here is 
 
 ---
 
-##  Security-First Approach: Expert QA Insight
+## 🛡️ Security-First Approach: Expert QA Insight
 
 The engine incorporates security and validation awareness inspired by common OWASP Top 10 risk areas.
 
@@ -47,7 +47,7 @@ In addition, each generated test includes a clear business and risk rationale ex
 
 ---
 
-##  High-Level Architecture
+## 🏗️  High-Level Architecture
 
 The application follows a clean separation of concerns, ensuring modularity between the UI, the logical engine, and the AI integration.
 
@@ -96,7 +96,7 @@ graph TD
 
 ---
 
-##  Output Structure
+## 📦 Output Structure
 
 Unlike generic chat bots, this engine enforces **strict structured outputs** suitable for professional QA workflows.
 
