@@ -230,7 +230,7 @@ npm run dev
 
 ---
 
-## 🔮 Roadmap & Future Vision
+## Roadmap & Future Vision
 
 ### ✅ Phase 1: Foundation (Implemented)
 * [x] **QA Design Engine:** Core Logic & AI Agent for requirement interpretation.
@@ -253,7 +253,7 @@ npm run dev
 
 ---
 
-## 👤 Author
+## Author
 
 **Martin Bělov**
 * QA Tester | Test Design | API, SQL | AI-Assisted Development
