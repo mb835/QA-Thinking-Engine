@@ -68,7 +68,7 @@ graph TD
 
 ---
 
-## 📸 Application Preview
+## Application Preview
 
 ### 1. QA Dashboard
 *Visual dashboard showcasing the future direction of QA metrics and system observability. Currently driven by mock data for UI validation and prototyping.*
