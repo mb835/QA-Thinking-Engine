@@ -1,4 +1,4 @@
-#  QA Thinking Engine ⚡ 
+#  QA Thinking Engine 
 
 **AI-assisted Risk-Based Test Design Tool**
 
@@ -10,7 +10,7 @@
 
 ---
 
-## 🧠 About the Project
+## About the Project
 
 **QA Thinking Engine** solves the "blank page" problem in software testing. It combines the power of **OpenAI (GPT-4)** with structured QA engineering principles.
 
@@ -47,7 +47,7 @@ In addition, each generated test includes a clear business and risk rationale ex
 
 ---
 
-## 🏗️  High-Level Architecture
+## High-Level Architecture
 
 The application follows a clean separation of concerns, ensuring modularity between the UI, the logical engine, and the AI integration.
 
@@ -70,33 +70,33 @@ graph TD
 
 ## 📸 Application Preview
 
-### 1. 📊 QA Dashboard
+### 1. QA Dashboard
 *Visual dashboard showcasing the future direction of QA metrics and system observability. Currently driven by mock data for UI validation and prototyping.*
 ![Dashboard View](./docs/Dashboard.png)
 
-### 2. 🎬 Workflow: Intent to Structure
+### 2. Workflow: Intent to Structure
 *Live demonstration of entering a test intent. The engine interprets natural language (Czech) and immediately suggests a test structure.*
 ![Input Workflow](./docs/TC1.gif)
 
-### 3. 🧠 AI Analysis & Processing
+### 3. AI Analysis & Processing
 *Visual feedback while the specialized AI agent analyzes the intent, constructs logic, and identifies potential risks.*
 ![AI Processing](./docs/Loading1.gif)
 
-### 4. 📋 Deep Dive: Test Case Detail
+### 4. Deep Dive: Test Case Detail
 *The final output: A structured Acceptance test with distinct steps, preconditions, and a dedicated "Expert QA Insight" panel.*
 ![Detail View](./docs/TCD01.png)
 
-### 5. 🛠️ Automated Playwright Code
+### 5. Automated Playwright Code
 *One-click generation of production-ready Playwright (TypeScript) code skeletons, fully commented and typed.*
 ![Code Generation](./docs/Skeleton.png)
 
-### 6. 🎫 JIRA Integration (Proof of Concept)
+### 6. JIRA Integration (Proof of Concept)
 *Direct integration with Atlassian JIRA. Scenarios can be exported as Tasks/Epics via REST API, bridging the gap between design and management.*
 ![JIRA Export](./docs/JiraExport.png)
 
 ---
 
-## 📦 Output Structure
+## Output Structure
 
 Unlike generic chat bots, this engine enforces **strict structured outputs** suitable for professional QA workflows.
 
@@ -139,7 +139,7 @@ The engine acts as a "second pair of eyes," analyzing coverage and risks.
 
 ---
 
-##  Core Capabilities
+## Core Capabilities
 
 *  **Accelerated Test Design & Automation:** From intent to Playwright skeletons in seconds.
 *  **Complex Flow Fidelity:** Handles large scenarios (20+ steps) with strict adherence to Acceptance Criteria.
@@ -150,7 +150,7 @@ The engine acts as a "second pair of eyes," analyzing coverage and risks.
 
 ---
 
-##  Tech Stack
+## Tech Stack
 
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
@@ -237,7 +237,7 @@ npm run dev
 * [x] **Playwright Export:** Automated TypeScript code generation for end-to-end testing.
 * [x] **JIRA Integration:** Seamless bridge between AI design and project management.
 
-### 🚀 Phase 2: Intelligence & Stability (Planned)
+### Phase 2: Intelligence & Stability (Planned)
 * [ ] **Analysis Profiles:** Configurable analysis modes controlling depth, coverage, and test granularity (e.g., *Balanced* vs *Deep Analysis*).
 * [ ] **Privacy-First Masking:** Automatic masking of sensitive data before AI processing.
 * [ ] **Contextual Awareness:** Integration with Confluence/Documentation to align tests with specific business logic.
@@ -245,7 +245,7 @@ npm run dev
 * [ ] **Persistent Storage:** MongoDB integration for saving test history and user preferences.
 * [ ] **Risk-Based Heatmaps:** Visual analytics to identify the most vulnerable parts of the application.
 
-### 🛠️ Phase 3: Scaling & Automation (Planned)
+### Phase 3: Scaling & Automation (Planned)
 * [ ] **CI/CD Pipeline:** GitHub Actions integration for automated test execution.
 * [ ] **Synthetic Data Generation:** AI-powered creation of safe, anonymized test data for privacy compliance.
 * [ ] **Cloud Testing:** Integration with SauceLabs/BrowserStack for cross-browser validation.
