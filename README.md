@@ -256,7 +256,7 @@ npm run dev
 ## Author
 
 **Martin Bělov**
-* QA Tester | Test Design | API, SQL | AI-Assisted Development
+* QA Tester | Test Design | API, SQL 
 * *This project demonstrates the intersection of QA methodology, AI Engineering, and Software Development.*
 
 ---
